@@ -418,6 +418,7 @@ def registro_ot():
             "CAMBIO DE BOMBA",
             "CAMBIO DE MOTOR",
             "CAMBIO DE VÁLVULA CHECK",
+            "INSPECCIÓN"
             "CAMBIO DE JUNTA DE EXPANSIÓN"
         ],
         key=f"tipo_falla_bombeo_{reset_id}"
