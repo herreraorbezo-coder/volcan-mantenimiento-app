@@ -20,6 +20,17 @@ from config import ESTADOS
 
 
 # ==========================================================
+# TÉCNICOS MANTENIMIENTO MECÁNICO
+# ==========================================================
+
+TECNICOS_MANTTO = [
+    "Raul Rosales",
+    "Rolando Laurente",
+    "Fernando Medina"
+]
+
+
+# ==========================================================
 # FOTO BASE64 CON COMPRESIÓN INTELIGENTE
 # ==========================================================
 
@@ -63,7 +74,7 @@ def convertir_foto_base64(archivo):
                 f"{foto_base64}"
             )
 
-            # LIMITE GOOGLE SHEETS
+            # LÍMITE GOOGLE SHEETS
             if len(resultado) < 49000:
                 return resultado
 
@@ -153,6 +164,23 @@ def convertir_hora(texto_hora):
 
 
 # ==========================================================
+# OBTENER LISTA DE APOYOS DISPONIBLES
+# ==========================================================
+
+def obtener_apoyos_disponibles(tecnico_principal):
+
+    tecnico_principal = str(tecnico_principal).strip().upper()
+
+    apoyos = [
+        tecnico
+        for tecnico in TECNICOS_MANTTO
+        if tecnico.upper().strip() != tecnico_principal
+    ]
+
+    return apoyos
+
+
+# ==========================================================
 # REGISTRO OT
 # ==========================================================
 
@@ -173,6 +201,81 @@ def registro_ot():
         .str.strip()
         .str.lower()
     )
+
+    # ======================================================
+    # FECHA Y TÉCNICO
+    # ======================================================
+
+    st.markdown("### 📅 Datos generales")
+
+    col_fecha, col_tecnico = st.columns(2)
+
+    with col_fecha:
+
+        fecha_evento = st.date_input(
+            "Fecha del evento",
+            value=datetime.today().date(),
+            key=f"fecha_evento_bombeo_{reset_id}"
+        )
+
+    tecnico_principal = str(st.session_state.nombre).strip()
+
+    with col_tecnico:
+
+        st.text_input(
+            "Técnico principal",
+            value=tecnico_principal,
+            disabled=True,
+            key=f"tecnico_principal_bombeo_{reset_id}"
+        )
+
+    # ======================================================
+    # APOYO DE TÉCNICOS
+    # ======================================================
+
+    apoyo_1 = ""
+    apoyo_2 = ""
+
+    tuvo_apoyo = st.checkbox(
+        "¿Tuvo apoyo de otro técnico?",
+        key=f"tuvo_apoyo_bombeo_{reset_id}"
+    )
+
+    if tuvo_apoyo:
+
+        apoyos_disponibles = obtener_apoyos_disponibles(
+            tecnico_principal
+        )
+
+        col_apoyo1, col_apoyo2 = st.columns(2)
+
+        with col_apoyo1:
+
+            apoyo_1 = st.selectbox(
+                "Apoyo 1",
+                [""] + apoyos_disponibles,
+                key=f"apoyo_1_bombeo_{reset_id}"
+            )
+
+        apoyos_para_apoyo2 = [
+            tecnico
+            for tecnico in apoyos_disponibles
+            if tecnico != apoyo_1
+        ]
+
+        with col_apoyo2:
+
+            apoyo_2 = st.selectbox(
+                "Apoyo 2",
+                [""] + apoyos_para_apoyo2,
+                key=f"apoyo_2_bombeo_{reset_id}"
+            )
+
+    st.markdown("---")
+
+    # ======================================================
+    # SISTEMA Y EQUIPO
+    # ======================================================
 
     sistema = st.selectbox(
         "Sistema",
@@ -272,12 +375,12 @@ def registro_ot():
     if hora_falla and hora_subsanada:
 
         inicio = datetime.combine(
-            datetime.today(),
+            fecha_evento,
             hora_falla
         )
 
         fin = datetime.combine(
-            datetime.today(),
+            fecha_evento,
             hora_subsanada
         )
 
@@ -392,6 +495,18 @@ def registro_ot():
             )
             st.stop()
 
+        if tuvo_apoyo and apoyo_1.strip() == "":
+            st.error(
+                "Seleccionaste que tuvo apoyo, pero no ingresaste Apoyo 1."
+            )
+            st.stop()
+
+        if apoyo_1 != "" and apoyo_2 != "" and apoyo_1 == apoyo_2:
+            st.error(
+                "Apoyo 1 y Apoyo 2 no pueden ser el mismo técnico."
+            )
+            st.stop()
+
         if (
             causa_preliminar == "REQUIERE REPUESTO"
             and repuesto_requerido.strip() == ""
@@ -415,8 +530,10 @@ def registro_ot():
 
         datos = [
             evento_id,
-            str(datetime.today().date()),
-            st.session_state.nombre,
+            str(fecha_evento),
+            tecnico_principal,
+            apoyo_1,
+            apoyo_2,
             sistema,
             nivel,
             ubicacion,
