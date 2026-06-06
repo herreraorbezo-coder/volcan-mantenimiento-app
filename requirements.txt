@@ -7,3 +7,6 @@ openpyxl
 Pillow
 plotly
 altair
+reportlab
+matplotlib
+python-docx
