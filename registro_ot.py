@@ -283,6 +283,15 @@ def registro_ot():
         key=f"sistema_bombeo_{reset_id}"
     )
 
+    tipo_mantenimiento = st.selectbox(
+        "Tipo de mantenimiento",
+        [
+            "PREVENTIVO",
+            "CORRECTIVO"
+        ],
+        key=f"tipo_mantenimiento_bombeo_{reset_id}"
+    )
+
     niveles = sorted(
         df_equipos["nivel"]
         .dropna()
@@ -408,6 +417,10 @@ def registro_ot():
     tipo_falla = st.selectbox(
         "¿Qué le pasó a la bomba?",
         [
+            "INSPECCIÓN",
+            "LUBRICACIÓN / ENGRASE",
+            "LIMPIEZA",
+            "MANTENIMIENTO PREVENTIVO",
             "FUGA",
             "RODAMIENTO",
             "SELLO MECÁNICO",
@@ -418,7 +431,6 @@ def registro_ot():
             "CAMBIO DE BOMBA",
             "CAMBIO DE MOTOR",
             "CAMBIO DE VÁLVULA CHECK",
-            "INSPECCIÓN",
             "CAMBIO DE JUNTA DE EXPANSIÓN"
         ],
         key=f"tipo_falla_bombeo_{reset_id}"
@@ -427,6 +439,8 @@ def registro_ot():
     causa_preliminar = st.selectbox(
         "Causa preliminar",
         [
+            "RUTINA PROGRAMADA",
+            "CONDICIÓN NORMAL",
             "DESGASTE",
             "FALTA DE LUBRICACIÓN",
             "OPERACIÓN",
@@ -453,7 +467,7 @@ def registro_ot():
         )
 
     descripcion = st.text_area(
-        "Descripción de la falla",
+        "Descripción de la falla / trabajo realizado",
         height=120,
         key=f"descripcion_falla_{reset_id}"
     )
@@ -519,7 +533,7 @@ def registro_ot():
 
         if descripcion.strip() == "":
             st.error(
-                "Debes ingresar una descripción de la falla."
+                "Debes ingresar una descripción de la falla o trabajo realizado."
             )
             st.stop()
 
@@ -536,6 +550,7 @@ def registro_ot():
             apoyo_1,
             apoyo_2,
             sistema,
+            tipo_mantenimiento,
             nivel,
             ubicacion,
             codigo,
