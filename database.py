@@ -14,7 +14,8 @@ from config import (
     SHEET_USUARIOS,
     SHEET_EQUIPOS,
     SHEET_BITACORA,
-    SHEET_FALLAS
+    SHEET_FALLAS,
+    SHEET_TRACKLESS
 )
 
 SCOPES = [
@@ -46,7 +47,8 @@ def obtener_hojas():
         "usuarios": sheet.worksheet(SHEET_USUARIOS),
         "equipos": sheet.worksheet(SHEET_EQUIPOS),
         "bitacora": sheet.worksheet(SHEET_BITACORA),
-        "fallas": sheet.worksheet(SHEET_FALLAS)
+        "fallas": sheet.worksheet(SHEET_FALLAS),
+        "trackless": sheet.worksheet(SHEET_TRACKLESS)
     }
 
     return hojas
@@ -80,9 +82,26 @@ def cargar_fallas():
     return pd.DataFrame(ws.get_all_records())
 
 
+def cargar_trackless():
+
+    ws = obtener_hojas()["trackless"]
+
+    return pd.DataFrame(ws.get_all_records())
+
+
 def guardar_bitacora(datos):
 
     ws = obtener_hojas()["bitacora"]
+
+    ws.append_row(
+        datos,
+        value_input_option="USER_ENTERED"
+    )
+
+
+def guardar_trackless(datos):
+
+    ws = obtener_hojas()["trackless"]
 
     ws.append_row(
         datos,
@@ -98,3 +117,13 @@ def generar_id():
         return "EVT-000001"
 
     return f"EVT-{len(df) + 1:06d}"
+
+
+def generar_id_trackless():
+
+    df = cargar_trackless()
+
+    if df.empty:
+        return "TRK-000001"
+
+    return f"TRK-{len(df) + 1:06d}"
