@@ -4,7 +4,7 @@
 # ==========================================================
 
 APP_NAME = "VOLCAN - Sistema de Gestión de Bombeo"
-LOGIN_TITLE = "VOLCAN APP"
+LOGIN_TITLE = "MANTENIMIENTO VOLCAN"
 
 LOGO_PATH = "assets/logo_volcan.png"
 BACKGROUND_PATH = "assets/fondo_login.jpg"
@@ -15,6 +15,7 @@ SHEET_USUARIOS = "usuarios"
 SHEET_EQUIPOS = "equipos_bombeo"
 SHEET_BITACORA = "bitacora"
 SHEET_FALLAS = "catalogo_fallas"
+SHEET_TRACKLESS = "trackless"
 
 # PEGA AQUÍ EL ID DE TU CARPETA DE GOOGLE DRIVE
 DRIVE_FOLDER_ID = "1SQm4DWE9R7G0BgraPnYg-sELCCw7edC2"
