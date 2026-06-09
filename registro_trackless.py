@@ -25,7 +25,7 @@ EQUIPOS_TRACKLESS = {
     "SCOOP": ["SCO-313", "SCO-314", "SCO-315", "SCO-316", "SCO-317", "SCO-322"],
     "MIXER": ["MIX-510", "MIX-508", "MIX-509"],
     "LANZADOR": ["ROB-A16", "ROB-A17"],
-    "DESATADOR": ["SCA-109", "SCA-110"],
+    "DESATADOR": ["SCA-109", "SCA-110", "SCA-115"],
     "UTILITARIO": ["MTM-114", "MTM-115"],
     "PLANTA": ["PLANTA FIJA", "PLANTA MÓVIL"],
     "OTROS": [
