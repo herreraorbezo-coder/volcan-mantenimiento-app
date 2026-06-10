@@ -228,9 +228,11 @@ def mostrar_historial_eventos():
 
             .container {{
                 display: grid;
-                grid-template-columns: 240px 1fr;
+                grid-template-columns: 240px minmax(0, 1fr);
                 gap: 18px;
                 margin-bottom: 18px;
+                width: 100%;
+                box-sizing: border-box;
             }}
 
             .image-box {{
@@ -361,6 +363,84 @@ def mostrar_historial_eventos():
                 color: #bdbdbd;
                 font-size: 12px;
             }}
+
+            /* ======================================================
+               RESPONSIVE - TABLET Y CELULAR
+            ====================================================== */
+            @media (max-width: 900px) {{
+
+                .container {{
+                    grid-template-columns: 1fr;
+                    gap: 12px;
+                }}
+
+                .image-box,
+                .no-image {{
+                    width: 100%;
+                    height: auto;
+                    min-height: 180px;
+                    box-sizing: border-box;
+                }}
+
+                .image-box img {{
+                    width: 100%;
+                    max-width: 260px;
+                    height: auto;
+                    max-height: 220px;
+                }}
+
+                .repo-header {{
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 10px;
+                }}
+
+                .repo-equipo {{
+                    font-size: 22px;
+                }}
+
+                .repo-subtitle {{
+                    font-size: 12px;
+                    line-height: 1.35;
+                }}
+
+                .repo-estado {{
+                    min-width: auto;
+                    width: fit-content;
+                }}
+
+                .repo-grid {{
+                    grid-template-columns: repeat(2, 1fr);
+                }}
+
+                .repo-card {{
+                    padding: 14px;
+                    min-height: auto;
+                }}
+            }}
+
+            @media (max-width: 600px) {{
+
+                .repo-grid {{
+                    grid-template-columns: 1fr;
+                }}
+
+                .repo-equipo {{
+                    font-size: 20px;
+                }}
+
+                .repo-value {{
+                    font-size: 13px;
+                }}
+
+                .repo-text {{
+                    font-size: 13px;
+                }}
+
+                .repo-section-title {{
+                    font-size: 12px;
+                }}
+            }}
         </style>
         </head>
 
@@ -424,6 +504,6 @@ def mostrar_historial_eventos():
 
         components.html(
             html_card,
-            height=310,
+            height=620,
             scrolling=False
         )
