@@ -1,6 +1,6 @@
 # ==========================================================
 # HISTORIAL_EVENTOS.PY
-# BITÁCORA VISUAL DE EVENTOS - SISTEMA DE BOMBEO
+# BITÁCORA VISUAL / PERIÓDICO DE MANTENIMIENTO
 # ==========================================================
 
 import streamlit as st
@@ -29,8 +29,8 @@ def obtener_bytes_imagen(foto_base64):
 
 def mostrar_historial_eventos():
 
-    st.title("📰 Historial Visual de Eventos")
-    st.caption("Bitácora visual para cambio de guardia · Sistema de bombeo")
+    st.title("📰 Bitácora Visual de Mantenimiento")
+    st.caption("Eventos recientes del sistema de bombeo · Cambio de guardia")
     st.markdown("---")
 
     df = cargar_bitacora()
@@ -42,31 +42,17 @@ def mostrar_historial_eventos():
     df.columns = df.columns.str.strip().str.lower()
 
     columnas_necesarias = [
-        "id",
-        "fecha",
-        "nivel",
-        "ubicacion",
-        "codigo",
-        "hora_falla",
-        "hora_subsanada",
-        "tipo_mantenimiento",
-        "tipo_falla",
-        "causa_preliminar",
-        "descripcion",
-        "estado",
-        "tecnico",
-        "foto"
+        "id", "fecha", "nivel", "ubicacion", "codigo",
+        "hora_falla", "hora_subsanada", "tipo_mantenimiento",
+        "tipo_falla", "causa_preliminar", "descripcion",
+        "estado", "tecnico", "foto"
     ]
 
     for col in columnas_necesarias:
         if col not in df.columns:
             df[col] = ""
 
-    df["fecha"] = pd.to_datetime(
-        df["fecha"],
-        errors="coerce"
-    )
-
+    df["fecha"] = pd.to_datetime(df["fecha"], errors="coerce")
     df = df.dropna(subset=["fecha"])
 
     if df.empty:
@@ -80,8 +66,6 @@ def mostrar_historial_eventos():
     # ======================================================
     # FILTROS
     # ======================================================
-
-    st.subheader("🔎 Filtros rápidos")
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -106,12 +90,7 @@ def mostrar_historial_eventos():
     with col4:
         rango = st.selectbox(
             "Periodo",
-            [
-                "Últimos 7 días",
-                "Últimos 15 días",
-                "Últimos 30 días",
-                "Todo"
-            ]
+            ["Últimos 7 días", "Últimos 15 días", "Últimos 30 días", "Todo"]
         )
 
     df_filtrado = df.copy()
@@ -125,10 +104,8 @@ def mostrar_historial_eventos():
     if estado != "TODOS":
         df_filtrado = df_filtrado[df_filtrado["estado"] == estado]
 
-    fecha_max = df_filtrado["fecha"].max()
-
-    if rango != "Todo" and pd.notna(fecha_max):
-
+    if rango != "Todo":
+        fecha_max = df_filtrado["fecha"].max()
         dias = {
             "Últimos 7 días": 7,
             "Últimos 15 días": 15,
@@ -137,28 +114,107 @@ def mostrar_historial_eventos():
 
         fecha_min = fecha_max - pd.Timedelta(days=dias - 1)
 
-        df_filtrado = df_filtrado[
-            df_filtrado["fecha"] >= fecha_min
-        ]
+        df_filtrado = df_filtrado[df_filtrado["fecha"] >= fecha_min]
 
     if df_filtrado.empty:
         st.warning("No hay eventos con los filtros seleccionados.")
         return
 
-    df_filtrado = df_filtrado.sort_values(
-        "fecha",
-        ascending=False
-    )
+    df_filtrado = df_filtrado.sort_values("fecha", ascending=False)
 
-    st.info(
-        f"Eventos encontrados: **{len(df_filtrado)}** · "
-        f"Mostrando del más reciente al más antiguo."
-    )
-
+    st.info(f"Eventos encontrados: **{len(df_filtrado)}**")
     st.markdown("---")
 
     # ======================================================
-    # TARJETAS TIPO PERIÓDICO
+    # ESTILO TIPO BOLETÍN
+    # ======================================================
+
+    st.markdown(
+        """
+        <style>
+        .boletin-card {
+            background: #ffffff;
+            color: #111111;
+            border-radius: 6px;
+            margin-bottom: 34px;
+            padding: 0px 0px 20px 0px;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0px 8px 24px rgba(0,0,0,0.25);
+        }
+
+        .boletin-title {
+            background: #b71c1c;
+            color: white;
+            padding: 12px 18px;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: .5px;
+            border-radius: 6px 6px 0px 0px;
+        }
+
+        .boletin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .boletin-table th {
+            background: #b71c1c;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #8e1111;
+            font-weight: 800;
+        }
+
+        .boletin-table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #9e9e9e;
+            vertical-align: middle;
+        }
+
+        .detalle-box {
+            padding: 14px 22px;
+            font-size: 15px;
+            line-height: 1.45;
+        }
+
+        .detalle-titulo {
+            font-weight: 900;
+            color: #b71c1c;
+            margin-bottom: 6px;
+        }
+
+        .tag-sub {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 14px;
+            background: #e8f5e9;
+            color: #1b5e20;
+            font-size: 12px;
+            font-weight: 800;
+            margin-right: 6px;
+        }
+
+        .tag-info {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 14px;
+            background: #e3f2fd;
+            color: #0d47a1;
+            font-size: 12px;
+            font-weight: 800;
+            margin-right: 6px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # ======================================================
+    # TARJETAS
     # ======================================================
 
     for _, row in df_filtrado.iterrows():
@@ -178,49 +234,72 @@ def mostrar_historial_eventos():
         tecnico = row.get("tecnico", "")
         foto = row.get("foto", "")
 
-        with st.container():
-
-            st.markdown(
-                f"""
-                <div style="
-                    border:1px solid rgba(255,255,255,0.15);
-                    border-radius:16px;
-                    padding:18px;
-                    margin-bottom:18px;
-                    background:rgba(255,255,255,0.045);
-                    box-shadow:0 8px 24px rgba(0,0,0,0.25);
-                ">
-                    <h3 style="margin-bottom:4px;">
-                        🛠️ {evento} · {fecha} · {nivel_txt} · {codigo_txt}
-                    </h3>
-                    <p style="margin:0;color:#bdbdbd;">
-                        Ubicación: <b>{ubicacion}</b> · 
-                        Inicio: <b>{hora_falla}</b> · 
-                        Fin: <b>{hora_subsanada}</b>
-                    </p>
-                    <hr style="border:0;border-top:1px solid rgba(255,255,255,0.12);">
-                    <p><b>Tipo mantenimiento:</b> {tipo_mantenimiento}</p>
-                    <p><b>Tipo de falla / intervención:</b> {tipo_falla}</p>
-                    <p><b>Causa preliminar:</b> {causa}</p>
-                    <p><b>Detalle / trabajo realizado:</b><br>{descripcion}</p>
-                    <p>
-                        <b>Estado:</b> {estado_txt} &nbsp;&nbsp; 
-                        <b>Registrado por:</b> {tecnico}
-                    </p>
+        st.markdown(
+            f"""
+            <div class="boletin-card">
+                <div class="boletin-title">
+                    🛠️ EVENTO DE MANTENIMIENTO - {evento}
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
 
-            imagen_bytes = obtener_bytes_imagen(foto)
+                <table class="boletin-table">
+                    <tr>
+                        <th>EVENTO</th>
+                        <th>FECHA</th>
+                        <th>NIVEL</th>
+                        <th>UBICACIÓN</th>
+                        <th>CÓDIGO</th>
+                        <th>ESTADO</th>
+                    </tr>
+                    <tr>
+                        <td>{evento}</td>
+                        <td>{fecha}</td>
+                        <td>{nivel_txt}</td>
+                        <td>{ubicacion}</td>
+                        <td><b>{codigo_txt}</b></td>
+                        <td><b>{estado_txt}</b></td>
+                    </tr>
+                </table>
 
-            if imagen_bytes is not None:
+                <div class="detalle-box">
+                    <span class="tag-sub">Inicio: {hora_falla}</span>
+                    <span class="tag-sub">Fin: {hora_subsanada}</span>
+                    <span class="tag-info">{tipo_mantenimiento}</span>
+
+                    <br><br>
+
+                    <div class="detalle-titulo">DETALLE / TRABAJO REALIZADO</div>
+                    {descripcion}
+
+                    <br><br>
+
+                    <div class="detalle-titulo">TIPO DE FALLA / INTERVENCIÓN</div>
+                    {tipo_falla}
+
+                    <br><br>
+
+                    <div class="detalle-titulo">CAUSA PRELIMINAR</div>
+                    {causa}
+
+                    <br><br>
+
+                    <b>Registrado por:</b> {tecnico}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        imagen_bytes = obtener_bytes_imagen(foto)
+
+        if imagen_bytes is not None:
+            col_a, col_b, col_c = st.columns([1, 2, 1])
+            with col_b:
                 st.image(
                     imagen_bytes,
                     caption=f"Evidencia fotográfica · {evento} · {codigo_txt}",
                     use_container_width=True
                 )
-            else:
-                st.caption("Sin evidencia fotográfica registrada.")
+        else:
+            st.caption("Sin evidencia fotográfica registrada.")
 
-            st.markdown("---")
+        st.markdown("<br>", unsafe_allow_html=True)
