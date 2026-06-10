@@ -13,6 +13,7 @@ from login import (
 
 from registro_ot import registro_ot
 from dashboard import mostrar_dashboard
+from historial_eventos import mostrar_historial_eventos
 
 from registro_trackless import registro_trackless
 from dashboard_trackless import mostrar_dashboard_trackless
@@ -67,6 +68,7 @@ if rol == "ADMIN":
 
     opciones_menu = [
         "Registro Evento",
+        "Historial Eventos",
         "Dashboard"
     ]
 
@@ -74,19 +76,22 @@ elif rol == "PLANNER":
 
     opciones_menu = [
         "Registro Evento",
+        "Historial Eventos",
         "Dashboard"
     ]
 
 elif rol == "TECNICO":
 
     opciones_menu = [
-        "Registro Evento"
+        "Registro Evento",
+        "Historial Eventos"
     ]
 
 else:
 
     opciones_menu = [
-        "Registro Evento"
+        "Registro Evento",
+        "Historial Eventos"
     ]
 
 
@@ -115,6 +120,10 @@ menu = st.sidebar.radio(
 if menu == "Registro Evento":
 
     registro_ot()
+
+elif menu == "Historial Eventos":
+
+    mostrar_historial_eventos()
 
 elif menu == "Dashboard":
 
