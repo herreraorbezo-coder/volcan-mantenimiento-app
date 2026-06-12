@@ -97,6 +97,7 @@ def mostrar_historial_lucarbal():
     columnas_necesarias = [
         "id",
         "fecha",
+        "turno",
         "familia_equipo",
         "codigo_lucarbal",
         "codigo_cognos",
@@ -128,7 +129,7 @@ def mostrar_historial_lucarbal():
         if col != "fecha":
             df[col] = df[col].astype(str).str.strip()
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
         familia = st.selectbox(
@@ -143,12 +144,18 @@ def mostrar_historial_lucarbal():
         )
 
     with col3:
+        turno_filtro = st.selectbox(
+            "Turno",
+            ["TODOS"] + sorted(df["turno"].dropna().unique().tolist())
+        )
+
+    with col4:
         estado = st.selectbox(
             "Estado",
             ["TODOS"] + sorted(df["estado_operativo"].dropna().unique().tolist())
         )
 
-    with col4:
+    with col5:
         rango = st.selectbox(
             "Periodo",
             ["Últimos 7 días", "Últimos 15 días", "Últimos 30 días", "Todo"]
@@ -161,6 +168,9 @@ def mostrar_historial_lucarbal():
 
     if equipo != "TODOS":
         df_filtrado = df_filtrado[df_filtrado["codigo_lucarbal"] == equipo]
+
+    if turno_filtro != "TODOS":
+        df_filtrado = df_filtrado[df_filtrado["turno"] == turno_filtro]
 
     if estado != "TODOS":
         df_filtrado = df_filtrado[df_filtrado["estado_operativo"] == estado]
@@ -193,6 +203,7 @@ def mostrar_historial_lucarbal():
 
         evento = limpiar_texto(row.get("id", ""))
         fecha = row["fecha"].strftime("%d/%m/%Y")
+        turno = limpiar_texto(row.get("turno", ""))
         familia_txt = limpiar_texto(row.get("familia_equipo", ""))
         codigo_lucarbal = limpiar_texto(row.get("codigo_lucarbal", ""))
         codigo_cognos = limpiar_texto(row.get("codigo_cognos", ""))
@@ -453,11 +464,14 @@ def mostrar_historial_lucarbal():
                         <div>
                             <div class="repo-equipo">{codigo_lucarbal}</div>
                             <div class="repo-subtitle">
-                                {evento} · {fecha} · {familia_txt} · {marca}
+                                {evento} · {fecha} · TURNO {turno} · {familia_txt} · {marca}
                             </div>
                         </div>
 
                         <div class="badge-row">
+                            <div class="badge" style="background:#424242;">
+                                TURNO {turno}
+                            </div>
                             <div class="badge" style="background:{color_tipo};">
                                 {tipo_mantenimiento}
                             </div>
