@@ -32,11 +32,9 @@ def convertir_foto_base64(archivo):
         return "SIN FOTO"
 
     try:
-
         imagen_original = Image.open(archivo)
         imagen_original = imagen_original.convert("RGB")
 
-        # Compresión más fuerte para Google Sheets
         ancho_max = 650
         alto_max = 650
         calidad = 45
@@ -44,10 +42,7 @@ def convertir_foto_base64(archivo):
         while True:
 
             imagen = imagen_original.copy()
-
-            imagen.thumbnail(
-                (ancho_max, alto_max)
-            )
+            imagen.thumbnail((ancho_max, alto_max))
 
             buffer = BytesIO()
 
@@ -62,12 +57,8 @@ def convertir_foto_base64(archivo):
                 buffer.getvalue()
             ).decode("utf-8")
 
-            resultado = (
-                f"data:image/jpeg;base64,"
-                f"{foto_base64}"
-            )
+            resultado = f"data:image/jpeg;base64,{foto_base64}"
 
-            # Límite más seguro para evitar saturar Sheets
             if len(resultado) < 35000:
                 return resultado
 
@@ -85,20 +76,14 @@ def convertir_foto_base64(archivo):
                 alto_max = 250
 
             if calidad == 18 and ancho_max == 250:
-
                 st.warning(
                     "⚠️ La foto fue comprimida automáticamente "
                     "para poder guardarse en Google Sheets."
                 )
-
                 return resultado
 
     except Exception as e:
-
-        st.error(
-            f"Error al procesar la foto: {e}"
-        )
-
+        st.error(f"Error al procesar la foto: {e}")
         return "SIN FOTO"
 
 
@@ -201,26 +186,44 @@ def registro_lucarbal():
 
     st.markdown("### 📅 Datos generales")
 
-    col1, col2 = st.columns(2)
+    col_fecha, col_turno = st.columns(2)
 
-    with col1:
-
+    with col_fecha:
         fecha = st.date_input(
             "Fecha reporte",
             value=datetime.today().date(),
             key=f"fecha_luc_{reset_id}"
         )
 
+    with col_turno:
+        turno = st.selectbox(
+            "Turno",
+            [
+                "DIA",
+                "NOCHE"
+            ],
+            key=f"turno_luc_{reset_id}"
+        )
+
     tecnico = str(st.session_state.nombre).strip()
     dni = str(st.session_state.dni).strip()
 
-    with col2:
+    col_tec, col_dni = st.columns(2)
 
+    with col_tec:
         st.text_input(
             "Técnico responsable",
             value=tecnico,
             disabled=True,
             key=f"tec_{reset_id}"
+        )
+
+    with col_dni:
+        st.text_input(
+            "DNI",
+            value=dni,
+            disabled=True,
+            key=f"dni_luc_{reset_id}"
         )
 
     # ======================================================
@@ -293,7 +296,6 @@ def registro_lucarbal():
     col3, col4 = st.columns(2)
 
     with col3:
-
         hora_falla_input = st.text_input(
             "Hora falla",
             placeholder="715 → 07:15",
@@ -301,7 +303,6 @@ def registro_lucarbal():
         )
 
     with col4:
-
         hora_sub_input = st.text_input(
             "Hora subsanada",
             placeholder="1530 → 15:30",
@@ -361,7 +362,6 @@ def registro_lucarbal():
         )
 
     elif hora_falla_input or hora_sub_input:
-
         st.warning(
             "Ingrese hora válida. Ejemplo: 715, 0715 o 07:15"
         )
@@ -389,7 +389,6 @@ def registro_lucarbal():
     )
 
     if foto is not None:
-
         st.image(
             foto,
             caption="Vista previa",
@@ -427,6 +426,7 @@ def registro_lucarbal():
         datos = [
             evento_id,
             str(fecha),
+            turno,
             familia,
             codigo_lucarbal,
             codigo_cognos,
