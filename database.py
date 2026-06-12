@@ -57,52 +57,60 @@ def obtener_hojas():
     }
 
 
-@st.cache_data(ttl=300)
+# ==========================================================
+# CARGA DE DATOS CON CACHE CONTROLADO
+# ==========================================================
+
+@st.cache_data(ttl=60)
 def cargar_usuarios():
     ws = obtener_hojas()["usuarios"]
     return pd.DataFrame(ws.get_all_records())
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def cargar_equipos():
     ws = obtener_hojas()["equipos"]
     return pd.DataFrame(ws.get_all_records())
 
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=30)
 def cargar_bitacora():
     ws = obtener_hojas()["bitacora"]
     return pd.DataFrame(ws.get_all_records())
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def cargar_fallas():
     ws = obtener_hojas()["fallas"]
     return pd.DataFrame(ws.get_all_records())
 
 
+@st.cache_data(ttl=30)
+def cargar_trackless():
+    ws = obtener_hojas()["trackless"]
+    return pd.DataFrame(ws.get_all_records())
+
+
+@st.cache_data(ttl=60)
+def cargar_equipos_lucarbal():
+    ws = obtener_hojas()["equipos_lucarbal"]
+    return pd.DataFrame(ws.get_all_records())
+
+
+@st.cache_data(ttl=30)
+def cargar_lucarbal_eventos():
+    ws = obtener_hojas()["lucarbal_eventos"]
+    return pd.DataFrame(ws.get_all_records())
+
+
+# ==========================================================
+# GUARDAR DATOS
+# ==========================================================
+
 def guardar_bitacora(datos):
     ws = obtener_hojas()["bitacora"]
     ws.append_row(datos, value_input_option="USER_ENTERED")
     cargar_bitacora.clear()
-
-
-def generar_id():
-    try:
-        ws = obtener_hojas()["bitacora"]
-        total_filas = len(ws.col_values(1)) - 1
-        return f"EVT-{total_filas + 1:06d}"
-    except Exception:
-        df = cargar_bitacora()
-        if df.empty:
-            return "EVT-000001"
-        return f"EVT-{len(df) + 1:06d}"
-
-
-@st.cache_data(ttl=120)
-def cargar_trackless():
-    ws = obtener_hojas()["trackless"]
-    return pd.DataFrame(ws.get_all_records())
 
 
 def guardar_trackless(datos):
@@ -111,43 +119,84 @@ def guardar_trackless(datos):
     cargar_trackless.clear()
 
 
-def generar_id_trackless():
-    try:
-        ws = obtener_hojas()["trackless"]
-        total_filas = len(ws.col_values(1)) - 1
-        return f"TRK-{total_filas + 1:06d}"
-    except Exception:
-        df = cargar_trackless()
-        if df.empty:
-            return "TRK-000001"
-        return f"TRK-{len(df) + 1:06d}"
-
-
-@st.cache_data(ttl=300)
-def cargar_equipos_lucarbal():
-    ws = obtener_hojas()["equipos_lucarbal"]
-    return pd.DataFrame(ws.get_all_records())
-
-
-@st.cache_data(ttl=120)
-def cargar_lucarbal_eventos():
-    ws = obtener_hojas()["lucarbal_eventos"]
-    return pd.DataFrame(ws.get_all_records())
-
-
 def guardar_lucarbal_evento(datos):
     ws = obtener_hojas()["lucarbal_eventos"]
     ws.append_row(datos, value_input_option="USER_ENTERED")
     cargar_lucarbal_eventos.clear()
 
 
+# ==========================================================
+# GENERAR IDS
+# ==========================================================
+
+def generar_id():
+
+    try:
+        ws = obtener_hojas()["bitacora"]
+        total_filas = len(ws.col_values(1)) - 1
+        return f"EVT-{total_filas + 1:06d}"
+
+    except Exception:
+        df = cargar_bitacora()
+
+        if df.empty:
+            return "EVT-000001"
+
+        return f"EVT-{len(df) + 1:06d}"
+
+
+def generar_id_trackless():
+
+    try:
+        ws = obtener_hojas()["trackless"]
+        total_filas = len(ws.col_values(1)) - 1
+        return f"TRK-{total_filas + 1:06d}"
+
+    except Exception:
+        df = cargar_trackless()
+
+        if df.empty:
+            return "TRK-000001"
+
+        return f"TRK-{len(df) + 1:06d}"
+
+
 def generar_id_lucarbal():
+
     try:
         ws = obtener_hojas()["lucarbal_eventos"]
         total_filas = len(ws.col_values(1)) - 1
         return f"LUC-{total_filas + 1:06d}"
+
     except Exception:
         df = cargar_lucarbal_eventos()
+
         if df.empty:
             return "LUC-000001"
+
         return f"LUC-{len(df) + 1:06d}"
+
+
+# ==========================================================
+# REFRESCAR CACHE MANUALMENTE
+# ==========================================================
+
+def refrescar_cache_datos():
+
+    funciones_cache = [
+        cargar_usuarios,
+        cargar_equipos,
+        cargar_bitacora,
+        cargar_fallas,
+        cargar_trackless,
+        cargar_equipos_lucarbal,
+        cargar_lucarbal_eventos
+    ]
+
+    for funcion in funciones_cache:
+
+        try:
+            funcion.clear()
+
+        except Exception:
+            pass
