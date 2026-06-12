@@ -10,7 +10,10 @@ import html
 
 import streamlit.components.v1 as components
 
-from database import cargar_lucarbal_eventos
+from database import (
+    cargar_lucarbal_eventos,
+    refrescar_cache_datos
+)
 
 
 def obtener_base64_limpio(foto_base64):
@@ -76,6 +79,11 @@ def mostrar_historial_lucarbal():
 
     st.title("🚛 Historial Visual Lucarbal")
     st.caption("Volquetes · Minicargadores · Semitrailers · Consulta rápida para cambio de guardia")
+
+    if st.button("🔄 Actualizar datos", use_container_width=True):
+        refrescar_cache_datos()
+        st.rerun()
+
     st.markdown("---")
 
     df = cargar_lucarbal_eventos()
@@ -157,13 +165,15 @@ def mostrar_historial_lucarbal():
     if estado != "TODOS":
         df_filtrado = df_filtrado[df_filtrado["estado_operativo"] == estado]
 
-    if rango != "Todo":
+    if rango != "Todo" and not df_filtrado.empty:
         fecha_max = df_filtrado["fecha"].max()
+
         dias = {
             "Últimos 7 días": 7,
             "Últimos 15 días": 15,
             "Últimos 30 días": 30
         }[rango]
+
         fecha_min = fecha_max - pd.Timedelta(days=dias - 1)
         df_filtrado = df_filtrado[df_filtrado["fecha"] >= fecha_min]
 
