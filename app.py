@@ -18,10 +18,9 @@ from historial_eventos import mostrar_historial_eventos
 from registro_trackless import registro_trackless
 from dashboard_trackless import mostrar_dashboard_trackless
 
+from registro_lucarbal import registro_lucarbal
+from historial_lucarbal import mostrar_historial_lucarbal
 
-# ==========================================================
-# CONFIGURACIÓN APP
-# ==========================================================
 
 st.set_page_config(
     page_title="MANTENIMIENTO VOLCAN",
@@ -30,133 +29,125 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-
-# ==========================================================
-# INICIALIZAR SESIÓN
-# ==========================================================
-
 inicializar_sesion()
 
-
-# ==========================================================
-# LOGIN
-# ==========================================================
-
 if not st.session_state.login:
-
     mostrar_login()
-
     st.stop()
-
-
-# ==========================================================
-# SIDEBAR USUARIO
-# ==========================================================
 
 sidebar_usuario()
 
-
-# ==========================================================
-# MENÚ SEGÚN ROL
-# ==========================================================
-
-rol = st.session_state.rol.upper().strip()
+rol = str(st.session_state.rol).upper().strip()
+empresa = str(st.session_state.empresa).upper().strip()
+dni = str(st.session_state.dni).strip()
 
 DNI_ADMIN_TRACKLESS = "75394588"
+opciones_menu = []
 
-if rol == "ADMIN":
 
+# ==========================================================
+# JHAN: ACCESO TOTAL
+# ==========================================================
+
+if dni == DNI_ADMIN_TRACKLESS:
     opciones_menu = [
         "Registro Evento",
         "Historial Eventos",
-        "Dashboard"
+        "Dashboard",
+        "Registro Trackless",
+        "Dashboard Trackless",
+        "Registro Lucarbal",
+        "Historial Lucarbal"
     ]
 
-elif rol == "PLANNER":
 
-    opciones_menu = [
-        "Registro Evento",
-        "Historial Eventos",
-        "Dashboard"
-    ]
+# ==========================================================
+# LUCARBAL
+# ==========================================================
 
-elif rol == "TECNICO":
+elif empresa == "LUCARBAL":
 
-    opciones_menu = [
-        "Registro Evento",
-        "Historial Eventos"
-    ]
+    if rol == "TECNICO":
+        opciones_menu = [
+            "Registro Lucarbal",
+            "Historial Lucarbal"
+        ]
+
+    elif rol in ["PLANNER", "ADMIN"]:
+        opciones_menu = [
+            "Historial Lucarbal"
+        ]
+
+    else:
+        opciones_menu = [
+            "Historial Lucarbal"
+        ]
+
+
+# ==========================================================
+# VOLCAN
+# ==========================================================
+
+elif empresa == "VOLCAN":
+
+    if rol in ["ADMIN", "PLANNER"]:
+        opciones_menu = [
+            "Registro Evento",
+            "Historial Eventos",
+            "Dashboard"
+        ]
+
+    elif rol == "TECNICO":
+        opciones_menu = [
+            "Registro Evento",
+            "Historial Eventos"
+        ]
+
+    else:
+        opciones_menu = [
+            "Registro Evento",
+            "Historial Eventos"
+        ]
 
 else:
-
-    opciones_menu = [
-        "Registro Evento",
-        "Historial Eventos"
-    ]
+    opciones_menu = ["Historial Eventos"]
 
 
-# ==========================================================
-# MENÚ TRACKLESS SOLO PARA JHAN
-# ==========================================================
+menu = st.sidebar.radio("Menú", opciones_menu)
 
-if st.session_state.dni == DNI_ADMIN_TRACKLESS:
-
-    opciones_menu += [
-        "Registro Trackless",
-        "Dashboard Trackless"
-    ]
-
-
-menu = st.sidebar.radio(
-    "Menú",
-    opciones_menu
-)
-
-
-# ==========================================================
-# PANTALLAS
-# ==========================================================
 
 if menu == "Registro Evento":
-
     registro_ot()
 
 elif menu == "Historial Eventos":
-
     mostrar_historial_eventos()
 
 elif menu == "Dashboard":
-
-    if rol in ["ADMIN", "PLANNER"]:
-
+    if rol in ["ADMIN", "PLANNER"] or dni == DNI_ADMIN_TRACKLESS:
         mostrar_dashboard()
-
     else:
-
-        st.error(
-            "No tienes permisos para acceder al Dashboard."
-        )
+        st.error("No tienes permisos.")
 
 elif menu == "Registro Trackless":
-
-    if st.session_state.dni == DNI_ADMIN_TRACKLESS:
-
+    if dni == DNI_ADMIN_TRACKLESS:
         registro_trackless()
-
     else:
-
-        st.error(
-            "No tienes permisos para acceder a Trackless."
-        )
+        st.error("No tienes permisos para Trackless.")
 
 elif menu == "Dashboard Trackless":
-
-    if st.session_state.dni == DNI_ADMIN_TRACKLESS:
-
+    if dni == DNI_ADMIN_TRACKLESS:
         mostrar_dashboard_trackless()
-
     else:
+        st.error("No tienes permisos para Trackless.")
 
-        st.error(
-            "No tienes permisos para acceder al Dashboard Trackless."
-        )
+elif menu == "Registro Lucarbal":
+    if (empresa == "LUCARBAL" and rol == "TECNICO") or dni == DNI_ADMIN_TRACKLESS:
+        registro_lucarbal()
+    else:
+        st.error("Solo técnicos Lucarbal pueden registrar eventos.")
+
+elif menu == "Historial Lucarbal":
+    if empresa == "LUCARBAL" or dni == DNI_ADMIN_TRACKLESS:
+        mostrar_historial_lucarbal()
+    else:
+        st.error("No tienes permisos para ver Historial Lucarbal.")
