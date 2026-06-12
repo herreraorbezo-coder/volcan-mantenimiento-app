@@ -6,7 +6,11 @@
 import streamlit as st
 
 from database import cargar_usuarios
-from styles import aplicar_estilos_globales, fondo_login, mostrar_logo
+from styles import (
+    aplicar_estilos_globales,
+    fondo_login,
+    mostrar_logo
+)
 
 
 # ==========================================================
@@ -15,23 +19,24 @@ from styles import aplicar_estilos_globales, fondo_login, mostrar_logo
 
 def inicializar_sesion():
 
-    if "login" not in st.session_state:
-        st.session_state.login = False
+    campos = [
+        "login",
+        "usuario",
+        "nombre",
+        "rol",
+        "cargo",
+        "dni",
+        "empresa"
+    ]
 
-    if "usuario" not in st.session_state:
-        st.session_state.usuario = None
+    for campo in campos:
 
-    if "nombre" not in st.session_state:
-        st.session_state.nombre = None
+        if campo not in st.session_state:
 
-    if "rol" not in st.session_state:
-        st.session_state.rol = None
-
-    if "cargo" not in st.session_state:
-        st.session_state.cargo = None
-
-    if "dni" not in st.session_state:
-        st.session_state.dni = None
+            if campo == "login":
+                st.session_state[campo] = False
+            else:
+                st.session_state[campo] = None
 
 
 # ==========================================================
@@ -48,10 +53,14 @@ def mostrar_login():
         unsafe_allow_html=True
     )
 
-    # LOGO CENTRADO
+    # ======================================================
+    # LOGO
+    # ======================================================
+
     col1, col2, col3 = st.columns([1, 1, 1])
 
     with col2:
+
         mostrar_logo(
             "assets/logo_volcan.png",
             ancho=260
@@ -59,14 +68,22 @@ def mostrar_login():
 
     st.markdown(
         """
-        <div class="main-title">VOLCAN APP</div>
-        <div class="main-subtitle">
-            Sistema Digital de Gestión de Eventos de Bombeo
+        <div class="main-title">
+            VOLCAN APP
         </div>
+
+        <div class="main-subtitle">
+            Sistema Digital de Gestión de Mantenimiento
+        </div>
+
         <div class="login-line"></div>
         """,
         unsafe_allow_html=True
     )
+
+    # ======================================================
+    # DNI
+    # ======================================================
 
     dni = st.text_input(
         "DNI",
@@ -82,11 +99,12 @@ def mostrar_login():
     st.markdown(
         """
         <div class="feature-box">
-            ⚙️ Registro de eventos &nbsp; | &nbsp;
-            💧 Sistema de bombeo &nbsp; | &nbsp;
-            📊 KPIs & Pareto &nbsp; | &nbsp;
+            ⚙️ Bombas &nbsp; | &nbsp;
+            🚜 Trackless &nbsp; | &nbsp;
+            🚛 Lucarbal &nbsp; | &nbsp;
             📷 Evidencias
         </div>
+
         <div class="footer-text">
             Mantenimiento Mecánico · Planeamiento · Confiabilidad
         </div>
@@ -99,56 +117,106 @@ def mostrar_login():
         unsafe_allow_html=True
     )
 
+    # ======================================================
+    # VALIDACIÓN LOGIN
+    # ======================================================
+
     if ingresar:
 
         dni = dni.strip()
 
         if dni == "":
-            st.error("Debe ingresar su DNI.")
+
+            st.error(
+                "Debe ingresar su DNI."
+            )
+
             st.stop()
 
         if not dni.isdigit() or len(dni) != 8:
-            st.error("El DNI debe tener 8 dígitos numéricos.")
+
+            st.error(
+                "El DNI debe tener 8 dígitos."
+            )
+
             st.stop()
+
+        # ==================================================
+        # CARGAR USUARIOS
+        # ==================================================
 
         df_users = cargar_usuarios()
 
         df_users.columns = (
+
             df_users.columns
             .str.strip()
             .str.lower()
+
         )
 
-        if "dni" not in df_users.columns:
-            st.error("La hoja usuarios no tiene la columna 'dni'.")
-            st.stop()
-
         columnas_requeridas = [
+
             "dni",
             "nombre",
             "rol",
             "cargo",
+            "empresa",
             "estado"
+
         ]
 
         for col in columnas_requeridas:
+
             if col not in df_users.columns:
-                st.error(f"Falta la columna '{col}' en la hoja usuarios.")
+
+                st.error(
+                    f"Falta la columna '{col}' en usuarios."
+                )
+
                 st.stop()
 
-        for col in ["dni", "estado"]:
+        # ==================================================
+        # LIMPIEZA
+        # ==================================================
+
+        for col in [
+
+            "dni",
+            "estado",
+            "empresa",
+            "rol"
+
+        ]:
+
             df_users[col] = (
+
                 df_users[col]
                 .astype(str)
                 .str.strip()
+
             )
+
+        # ==================================================
+        # VALIDACIÓN
+        # ==================================================
 
         validacion = df_users[
 
-            (df_users["dni"] == dni) &
+            (df_users["dni"] == dni)
 
-            (df_users["estado"].str.upper() == "ACTIVO")
+            &
+
+            (
+                df_users["estado"]
+                .str.upper()
+                == "ACTIVO"
+            )
         ]
+
+        # ==================================================
+        # LOGIN EXITOSO
+        # ==================================================
 
         if not validacion.empty:
 
@@ -158,16 +226,34 @@ def mostrar_login():
             st.session_state.dni = dni
 
             if "usuario" in df_users.columns:
-                st.session_state.usuario = usuario_data["usuario"]
+
+                st.session_state.usuario = str(
+                    usuario_data["usuario"]
+                )
+
             else:
+
                 st.session_state.usuario = dni
 
-            st.session_state.nombre = usuario_data["nombre"]
-            st.session_state.rol = usuario_data["rol"]
-            st.session_state.cargo = usuario_data["cargo"]
+            st.session_state.nombre = str(
+                usuario_data["nombre"]
+            )
+
+            st.session_state.rol = str(
+                usuario_data["rol"]
+            )
+
+            st.session_state.cargo = str(
+                usuario_data["cargo"]
+            )
+
+            st.session_state.empresa = str(
+                usuario_data["empresa"]
+            )
 
             st.success(
-                f"Bienvenido {usuario_data['nombre']}"
+                f"Bienvenido "
+                f"{usuario_data['nombre']}"
             )
 
             st.rerun()
@@ -180,7 +266,7 @@ def mostrar_login():
 
 
 # ==========================================================
-# SIDEBAR USUARIO
+# SIDEBAR
 # ==========================================================
 
 def sidebar_usuario():
@@ -189,7 +275,10 @@ def sidebar_usuario():
 
     with st.sidebar:
 
-        st.markdown("## ⚙️ VOLCAN APP")
+        st.markdown(
+            "## ⚙️ VOLCAN APP"
+        )
+
         st.markdown("---")
 
         st.success(
@@ -201,12 +290,20 @@ def sidebar_usuario():
         )
 
         st.info(
-            f"Rol: {st.session_state.rol}"
+            f"Rol: "
+            f"{st.session_state.rol}"
+        )
+
+        st.info(
+            f"Empresa: "
+            f"{st.session_state.empresa}"
         )
 
         if st.session_state.dni:
+
             st.caption(
-                f"DNI: {st.session_state.dni}"
+                f"DNI: "
+                f"{st.session_state.dni}"
             )
 
         st.markdown("---")
