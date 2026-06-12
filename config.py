@@ -17,7 +17,15 @@ SHEET_BITACORA = "bitacora"
 SHEET_FALLAS = "catalogo_fallas"
 SHEET_TRACKLESS = "trackless"
 
-# PEGA AQUÍ EL ID DE TU CARPETA DE GOOGLE DRIVE
+# ==========================================
+# NUEVO LUCARBAL
+# ==========================================
+
+SHEET_EQUIPOS_LUCARBAL = "equipos_lucarbal"
+SHEET_LUCARBAL_EVENTOS = "lucarbal_eventos"
+
+# ==========================================
+
 DRIVE_FOLDER_ID = "1SQm4DWE9R7G0BgraPnYg-sELCCw7edC2"
 
 ROLES = {
@@ -31,6 +39,17 @@ ESTADOS = [
     "PENDIENTE",
     "FUERA DE SERVICIO",
     "EN SEGUIMIENTO"
+]
+
+ESTADOS_LUCARBAL = [
+    "OPERATIVO",
+    "INOPERATIVO",
+    "STAND BY"
+]
+
+TIPOS_MANTENIMIENTO = [
+    "PREVENTIVO",
+    "CORRECTIVO"
 ]
 
 SISTEMAS = [
