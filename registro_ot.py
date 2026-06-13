@@ -9,6 +9,9 @@ import base64
 from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
+from zoneinfo import ZoneInfo
+def ahora_peru():
+    return datetime.now(ZoneInfo("America/Lima"))
 
 from database import (
     cargar_equipos,
@@ -214,7 +217,7 @@ def registro_ot():
 
         fecha_evento = st.date_input(
             "Fecha del evento",
-            value=datetime.today().date(),
+            value=ahora_peru().date(),
             key=f"fecha_evento_bombeo_{reset_id}"
         )
 
