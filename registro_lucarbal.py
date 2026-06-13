@@ -9,7 +9,9 @@ import base64
 from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
-
+from zoneinfo import ZoneInfo
+def ahora_peru():
+    return datetime.now(ZoneInfo("America/Lima"))
 from database import (
     cargar_equipos_lucarbal,
     guardar_lucarbal_evento,
@@ -191,7 +193,7 @@ def registro_lucarbal():
     with col_fecha:
         fecha = st.date_input(
             "Fecha reporte",
-            value=datetime.today().date(),
+            value=ahora_peru().date(),
             key=f"fecha_luc_{reset_id}"
         )
 
@@ -440,7 +442,7 @@ def registro_lucarbal():
             tecnico,
             dni,
             foto_base64,
-            str(datetime.now())
+            str(ahora_peru())
         ]
 
         guardar_lucarbal_evento(
