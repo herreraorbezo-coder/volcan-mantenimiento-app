@@ -19,17 +19,9 @@ from database import (
 from config import ESTADOS_PLANTA_MOVIL
 
 
-# ==========================================================
-# FECHA / HORA PERÚ
-# ==========================================================
-
 def ahora_peru():
     return datetime.now(ZoneInfo("America/Lima"))
 
-
-# ==========================================================
-# ÁREAS Y EQUIPOS - PLANTA MÓVIL
-# ==========================================================
 
 AREAS_PLANTA_MOVIL = {
     "Área 1 - Silo de Cemento": [
@@ -70,48 +62,15 @@ TIPOS_INTERVENCION = [
 ]
 
 
-ACTIVIDADES = [
-    "Limpieza",
-    "Engrase",
-    "Inspección visual",
-    "Ajuste",
-    "Cambio componente",
-    "Soldadura",
-    "Lubricación",
-    "Calibración",
-    "Reparación",
-    "Lavado",
-    "Desatoro",
-    "Cambio de aceite",
-    "Cambio de rodamiento"
+MOTIVOS_PARADA = [
+    "Mantenimiento programado",
+    "Falla mecánica",
+    "Falla eléctrica",
+    "Falta de material",
+    "Espera operación",
+    "Otro"
 ]
 
-
-PUNTOS_LIMPIEZA = [
-    "Zona inferior de tolva / descarga",
-    "Tornillo sinfín y zona de alimentación",
-    "Tolva de agregado / lavado interno",
-    "Parte inferior de transportadores / zonas ocultas",
-    "Chute de descarga / sistema vibratorio",
-    "Plataforma superior / boca de acceso",
-    "Faja transportadora"
-]
-
-
-PUNTOS_ENGRASE = [
-    "Rodillo inferior / rodamiento tolva",
-    "Motorreductor agitador izquierdo",
-    "Motorreductor agitador derecho",
-    "Poleas y rodillos faja transportadora",
-    "Rodamientos internos del mezclador",
-    "Acople / transmisión principal",
-    "Sistema de transmisión inferior"
-]
-
-
-# ==========================================================
-# FOTO BASE64 CON COMPRESIÓN INTELIGENTE
-# ==========================================================
 
 def convertir_foto_base64(archivo):
 
@@ -119,21 +78,15 @@ def convertir_foto_base64(archivo):
         return "SIN FOTO"
 
     try:
-
-        imagen_original = Image.open(archivo)
-        imagen_original = imagen_original.convert("RGB")
+        imagen_original = Image.open(archivo).convert("RGB")
 
         ancho_max = 700
         alto_max = 700
         calidad = 55
 
         while True:
-
             imagen = imagen_original.copy()
-
-            imagen.thumbnail(
-                (ancho_max, alto_max)
-            )
+            imagen.thumbnail((ancho_max, alto_max))
 
             buffer = BytesIO()
 
@@ -148,10 +101,7 @@ def convertir_foto_base64(archivo):
                 buffer.getvalue()
             ).decode("utf-8")
 
-            resultado = (
-                f"data:image/jpeg;base64,"
-                f"{foto_base64}"
-            )
+            resultado = f"data:image/jpeg;base64,{foto_base64}"
 
             if len(resultado) < 49000:
                 return resultado
@@ -169,25 +119,15 @@ def convertir_foto_base64(archivo):
             if alto_max < 300:
                 alto_max = 300
 
-            if (
-                calidad == 20
-                and ancho_max == 300
-            ):
-
+            if calidad == 20 and ancho_max == 300:
                 st.warning(
-                    "⚠️ La foto fue comprimida automáticamente "
-                    "para poder guardarse."
+                    "⚠️ La foto fue comprimida automáticamente."
                 )
-
                 return resultado
 
     except Exception as e:
         return f"ERROR FOTO: {e}"
 
-
-# ==========================================================
-# FORMATEAR HORA
-# ==========================================================
 
 def formatear_hora(texto_hora):
 
@@ -210,22 +150,13 @@ def formatear_hora(texto_hora):
 
     if len(solo_numeros) == 1:
         solo_numeros = "000" + solo_numeros
-
     elif len(solo_numeros) == 2:
         solo_numeros = "00" + solo_numeros
-
     elif len(solo_numeros) == 3:
         solo_numeros = "0" + solo_numeros
 
-    hora = solo_numeros[:2]
-    minuto = solo_numeros[2:]
+    return f"{solo_numeros[:2]}:{solo_numeros[2:]}"
 
-    return f"{hora}:{minuto}"
-
-
-# ==========================================================
-# VALIDAR HORA
-# ==========================================================
 
 def convertir_hora(texto_hora):
 
@@ -239,13 +170,26 @@ def convertir_hora(texto_hora):
         return None
 
 
-# ==========================================================
-# REGISTRO PLANTA MÓVIL
-# ==========================================================
+def calcular_tiempo_min(fecha, hora_inicio, hora_fin):
+
+    inicio = datetime.combine(fecha, hora_inicio)
+    fin = datetime.combine(fecha, hora_fin)
+
+    if fin < inicio:
+        fin += timedelta(days=1)
+
+    return round(
+        (fin - inicio).total_seconds() / 60,
+        2
+    )
+
 
 def registro_planta_movil():
 
     st.title("🏗️ Registro de Mantenimiento - Planta Móvil")
+    st.caption(
+        "LIVERH · Intervención puntual, limpieza general, engrase general y parada general"
+    )
     st.markdown("---")
 
     if "reset_form_planta_movil" not in st.session_state:
@@ -253,149 +197,157 @@ def registro_planta_movil():
 
     reset_id = st.session_state.reset_form_planta_movil
 
-    # ======================================================
-    # DATOS GENERALES
-    # ======================================================
+    st.markdown("### 📌 Tipo de registro")
 
+    tipo_registro = st.radio(
+        "Selecciona el tipo de registro",
+        [
+            "🔧 Intervención puntual",
+            "🧹 Limpieza general",
+            "🛢️ Engrase general",
+            "⛔ Parada general"
+        ],
+        horizontal=True,
+        key=f"tipo_registro_planta_{reset_id}"
+    )
+
+    st.markdown("---")
     st.markdown("### 📅 Datos generales")
 
     col_fecha, col_turno, col_tecnico = st.columns(3)
 
     with col_fecha:
-
-        fecha_evento = st.date_input(
+        fecha = st.date_input(
             "Fecha",
             value=ahora_peru().date(),
-            key=f"fecha_planta_movil_{reset_id}"
+            key=f"fecha_planta_{reset_id}"
         )
 
     with col_turno:
-
         turno = st.selectbox(
             "Turno",
-            [
-                "DÍA",
-                "NOCHE"
-            ],
-            key=f"turno_planta_movil_{reset_id}"
+            ["DÍA", "NOCHE"],
+            key=f"turno_planta_{reset_id}"
         )
 
-    tecnico = str(
-        st.session_state.nombre
-    ).strip()
+    tecnico = str(st.session_state.nombre).strip()
 
     with col_tecnico:
-
         st.text_input(
             "Técnico",
             value=tecnico,
             disabled=True,
-            key=f"tecnico_planta_movil_{reset_id}"
+            key=f"tecnico_planta_{reset_id}"
         )
 
     apoyo = st.text_input(
         "Apoyo / personal adicional",
-        placeholder="Opcional: nombre de apoyo",
-        key=f"apoyo_planta_movil_{reset_id}"
+        placeholder="Opcional",
+        key=f"apoyo_planta_{reset_id}"
     )
+
+    area = ""
+    equipo_punto = ""
+    tipo_intervencion = ""
+    motivo_parada = ""
+    tipo_lubricante = ""
 
     st.markdown("---")
 
-    # ======================================================
-    # ÁREA Y EQUIPO
-    # ======================================================
+    if tipo_registro == "🔧 Intervención puntual":
 
-    st.markdown("### 🏭 Área y equipo intervenido")
+        st.markdown("### 🏭 Área y equipo intervenido")
 
-    col_area, col_equipo = st.columns(2)
+        col_area, col_equipo = st.columns(2)
 
-    with col_area:
+        with col_area:
+            area = st.selectbox(
+                "Área",
+                list(AREAS_PLANTA_MOVIL.keys()),
+                key=f"area_planta_{reset_id}"
+            )
 
-        area = st.selectbox(
-            "Área",
-            list(AREAS_PLANTA_MOVIL.keys()),
-            key=f"area_planta_movil_{reset_id}"
+        with col_equipo:
+            equipo_punto = st.selectbox(
+                "Equipo / punto",
+                AREAS_PLANTA_MOVIL[area],
+                key=f"equipo_planta_{reset_id}"
+            )
+
+        tipo_intervencion = st.selectbox(
+            "Tipo de intervención",
+            TIPOS_INTERVENCION,
+            key=f"tipo_intervencion_planta_{reset_id}"
         )
 
-    with col_equipo:
+    elif tipo_registro == "🧹 Limpieza general":
 
-        equipo_punto = st.selectbox(
-            "Equipo / punto",
-            AREAS_PLANTA_MOVIL[area],
-            key=f"equipo_punto_planta_movil_{reset_id}"
+        st.markdown("### 🧹 Limpieza general de fin de guardia")
+
+        area = "Área 1 + Área 2 + Área 3"
+        equipo_punto = "Planta móvil completa"
+        tipo_intervencion = "M1 - Limpieza general"
+
+        st.info(
+            "Este registro aplica a limpieza general de planta móvil: "
+            "silo, tolva de agregado y faja transportadora."
         )
 
-    tipo_intervencion = st.selectbox(
-        "Tipo de intervención",
-        TIPOS_INTERVENCION,
-        key=f"tipo_intervencion_planta_movil_{reset_id}"
-    )
+    elif tipo_registro == "🛢️ Engrase general":
 
-    actividad = st.multiselect(
-        "Actividad realizada",
-        ACTIVIDADES,
-        key=f"actividad_planta_movil_{reset_id}"
-    )
+        st.markdown("### 🛢️ Engrase general")
+
+        area = "Área 1 + Área 2 + Área 3"
+        equipo_punto = "Puntos de engrase planta móvil"
+        tipo_intervencion = "M1 - Engrase general"
+
+        tipo_lubricante = st.selectbox(
+            "Tipo de lubricante",
+            ["GRASA", "ACEITE", "MIXTO"],
+            key=f"lubricante_planta_{reset_id}"
+        )
+
+        st.info(
+            "Este registro aplica al engrase general diario de puntos críticos "
+            "de la planta móvil."
+        )
+
+    elif tipo_registro == "⛔ Parada general":
+
+        st.markdown("### ⛔ Parada general de planta")
+
+        area = "Área 1 + Área 2 + Área 3"
+        equipo_punto = "Planta móvil completa"
+
+        motivo_parada = st.selectbox(
+            "Motivo de parada",
+            MOTIVOS_PARADA,
+            key=f"motivo_parada_planta_{reset_id}"
+        )
+
+        tipo_intervencion = "Parada general"
 
     st.markdown("---")
-
-    # ======================================================
-    # PUNTOS INTERVENIDOS
-    # ======================================================
-
-    st.markdown("### 🧹 Puntos intervenidos")
-
-    col_limpieza, col_engrase = st.columns(2)
-
-    with col_limpieza:
-
-        puntos_limpieza = st.multiselect(
-            "Puntos de limpieza",
-            PUNTOS_LIMPIEZA,
-            key=f"puntos_limpieza_planta_movil_{reset_id}"
-        )
-
-    with col_engrase:
-
-        puntos_engrase = st.multiselect(
-            "Puntos de engrase",
-            PUNTOS_ENGRASE,
-            key=f"puntos_engrase_planta_movil_{reset_id}"
-        )
-
-    st.markdown("---")
-
-    # ======================================================
-    # TIEMPOS
-    # ======================================================
-
     st.markdown("### ⏱ Registro de tiempos")
 
     col_inicio, col_fin = st.columns(2)
 
     with col_inicio:
-
         hora_inicio_input = st.text_input(
             "Hora inicio",
             placeholder="Ejemplo: 715 → 07:15",
-            key=f"hora_inicio_planta_movil_{reset_id}"
+            key=f"hora_inicio_planta_{reset_id}"
         )
 
     with col_fin:
-
         hora_fin_input = st.text_input(
             "Hora fin",
             placeholder="Ejemplo: 1530 → 15:30",
-            key=f"hora_fin_planta_movil_{reset_id}"
+            key=f"hora_fin_planta_{reset_id}"
         )
 
-    hora_inicio_txt = formatear_hora(
-        hora_inicio_input
-    )
-
-    hora_fin_txt = formatear_hora(
-        hora_fin_input
-    )
+    hora_inicio_txt = formatear_hora(hora_inicio_input)
+    hora_fin_txt = formatear_hora(hora_fin_input)
 
     if hora_inicio_input:
         st.caption(
@@ -407,36 +359,17 @@ def registro_planta_movil():
             f"Hora fin detectada: {hora_fin_txt}"
         )
 
-    hora_inicio = convertir_hora(
-        hora_inicio_txt
-    )
-
-    hora_fin = convertir_hora(
-        hora_fin_txt
-    )
+    hora_inicio = convertir_hora(hora_inicio_txt)
+    hora_fin = convertir_hora(hora_fin_txt)
 
     tiempo_parada_min = None
 
     if hora_inicio and hora_fin:
 
-        inicio = datetime.combine(
-            fecha_evento,
-            hora_inicio
-        )
-
-        fin = datetime.combine(
-            fecha_evento,
+        tiempo_parada_min = calcular_tiempo_min(
+            fecha,
+            hora_inicio,
             hora_fin
-        )
-
-        if fin < inicio:
-            fin += timedelta(days=1)
-
-        tiempo_parada_min = round(
-            (
-                fin - inicio
-            ).total_seconds() / 60,
-            2
         )
 
         st.info(
@@ -450,19 +383,67 @@ def registro_planta_movil():
         )
 
     # ======================================================
-    # DETALLE / ESTADO / FOTO
+    # REQUERIMIENTO DE REPUESTO / MATERIAL
     # ======================================================
 
+    st.markdown("---")
+    st.markdown("### 📦 Repuesto / material requerido")
+
+    requiere_repuesto = st.checkbox(
+        "¿Requiere repuesto o material para seguimiento?",
+        key=f"requiere_repuesto_planta_{reset_id}"
+    )
+
+    repuesto_requerido = ""
+
+    if requiere_repuesto:
+
+        repuesto_requerido = st.text_input(
+            "Indicar repuesto o material requerido",
+            placeholder=(
+                "Ejemplo: grasa EP2, rodamiento, polín, faja, sensor, "
+                "aceite reductor, pernos, chumacera..."
+            ),
+            key=f"repuesto_requerido_planta_{reset_id}"
+        )
+
+    # ======================================================
+    # DETALLE
+    # ======================================================
+
+    detalle_default = ""
+
+    if tipo_registro == "🧹 Limpieza general":
+        detalle_default = (
+            "Limpieza general de fin de guardia en planta móvil. "
+            "Retiro de material acumulado en silo, tolva, chute, zona de mezcla "
+            "y faja transportadora."
+        )
+
+    elif tipo_registro == "🛢️ Engrase general":
+        detalle_default = (
+            "Engrase general diario de puntos críticos de planta móvil. "
+            "Verificación de puntos móviles, rodamientos, polines, transmisión "
+            "y componentes expuestos a polvo."
+        )
+
+    elif tipo_registro == "⛔ Parada general":
+        detalle_default = (
+            "Parada general de planta móvil. Se registra condición, motivo, "
+            "tiempo de parada y acciones realizadas."
+        )
+
     detalle = st.text_area(
-        "Detalle del trabajo realizado / condición encontrada",
-        height=120,
-        key=f"detalle_planta_movil_{reset_id}"
+        "Detalle técnico",
+        value=detalle_default,
+        height=130,
+        key=f"detalle_planta_{reset_id}"
     )
 
     estado = st.selectbox(
         "Estado",
         ESTADOS_PLANTA_MOVIL,
-        key=f"estado_planta_movil_{reset_id}"
+        key=f"estado_planta_{reset_id}"
     )
 
     evidencia = st.file_uploader(
@@ -472,32 +453,21 @@ def registro_planta_movil():
             "jpeg",
             "png"
         ],
-        key=f"evidencia_planta_movil_{reset_id}"
+        key=f"evidencia_planta_{reset_id}"
     )
 
     if evidencia is not None:
-
         st.image(
             evidencia,
             caption="Vista previa de evidencia",
             use_container_width=True
         )
 
-    # ======================================================
-    # GUARDAR
-    # ======================================================
-
     if st.button(
         "Guardar Registro Planta Móvil",
         use_container_width=True,
-        key=f"btn_guardar_planta_movil_{reset_id}"
+        key=f"btn_guardar_planta_{reset_id}"
     ):
-
-        if not actividad:
-            st.error(
-                "Debes seleccionar al menos una actividad realizada."
-            )
-            st.stop()
 
         if hora_inicio is None:
             st.error(
@@ -511,9 +481,18 @@ def registro_planta_movil():
             )
             st.stop()
 
+        if (
+            requiere_repuesto
+            and repuesto_requerido.strip() == ""
+        ):
+            st.error(
+                "Marcaste que requiere repuesto/material, debes indicar cuál."
+            )
+            st.stop()
+
         if detalle.strip() == "":
             st.error(
-                "Debes ingresar el detalle del trabajo realizado."
+                "Debes ingresar el detalle técnico."
             )
             st.stop()
 
@@ -524,19 +503,21 @@ def registro_planta_movil():
         id_evento = generar_id_planta_movil()
 
         datos = [
-            str(fecha_evento),
+            str(fecha),
             turno,
+            tipo_registro,
             area,
             equipo_punto,
             tipo_intervencion,
-            " | ".join(actividad),
-            " | ".join(puntos_limpieza),
-            " | ".join(puntos_engrase),
+            motivo_parada,
+            tipo_lubricante,
             hora_inicio_txt,
             hora_fin_txt,
             tiempo_parada_min,
             tecnico,
             apoyo,
+            "SI" if requiere_repuesto else "NO",
+            repuesto_requerido,
             detalle,
             estado,
             foto_guardada,
