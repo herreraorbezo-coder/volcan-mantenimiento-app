@@ -84,17 +84,9 @@ sidebar_usuario()
 # VARIABLES
 # ==========================================================
 
-rol = str(
-    st.session_state.rol
-).upper().strip()
-
-empresa = str(
-    st.session_state.empresa
-).upper().strip()
-
-dni = str(
-    st.session_state.dni
-).strip()
+rol = str(st.session_state.rol).upper().strip()
+empresa = str(st.session_state.empresa).upper().strip()
+dni = str(st.session_state.dni).strip()
 
 DNI_ADMIN_TRACKLESS = "75394588"
 
@@ -108,33 +100,16 @@ opciones_menu = []
 if dni == DNI_ADMIN_TRACKLESS:
 
     opciones_menu = [
-
-        # ------------------------------
-        # BOMBEO
-        # ------------------------------
-
         "Registro Evento",
         "Historial Eventos",
         "Dashboard",
 
-        # ------------------------------
-        # TRACKLESS
-        # ------------------------------
-
         "Registro Trackless",
         "Dashboard Trackless",
-
-        # ------------------------------
-        # LUCARBAL
-        # ------------------------------
 
         "Registro Lucarbal",
         "Historial Lucarbal",
         "Dashboard Lucarbal",
-
-        # ------------------------------
-        # PLANTA MÓVIL - LIVERH
-        # ------------------------------
 
         "Registro Mantto Planta Móvil",
         "Historial Mantto Planta Móvil",
@@ -156,10 +131,7 @@ elif empresa == "LUCARBAL":
             "Historial Lucarbal"
         ]
 
-    elif rol in [
-        "PLANNER",
-        "ADMIN"
-    ]:
+    elif rol in ["PLANNER", "ADMIN"]:
 
         opciones_menu = [
             "Historial Lucarbal",
@@ -190,13 +162,11 @@ elif empresa == "LIVERH":
 
         opciones_menu = [
             "Registro Despacho Mixers",
-            "Historial Despacho Mixers"
+            "Historial Despacho Mixers",
+            "Historial Mantto Planta Móvil"
         ]
 
-    elif rol in [
-        "ADMIN",
-        "PLANNER"
-    ]:
+    elif rol in ["ADMIN", "PLANNER"]:
 
         opciones_menu = [
             "Registro Mantto Planta Móvil",
@@ -208,7 +178,6 @@ elif empresa == "LIVERH":
     else:
 
         opciones_menu = [
-            "Registro Mantto Planta Móvil",
             "Historial Mantto Planta Móvil"
         ]
 
@@ -219,10 +188,7 @@ elif empresa == "LIVERH":
 
 elif empresa == "VOLCAN":
 
-    if rol in [
-        "ADMIN",
-        "PLANNER"
-    ]:
+    if rol in ["ADMIN", "PLANNER"]:
 
         opciones_menu = [
             "Registro Evento",
@@ -280,21 +246,10 @@ elif menu == "Historial Eventos":
 
 elif menu == "Dashboard":
 
-    if (
-        rol in [
-            "ADMIN",
-            "PLANNER"
-        ]
-        or dni == DNI_ADMIN_TRACKLESS
-    ):
-
+    if rol in ["ADMIN", "PLANNER"] or dni == DNI_ADMIN_TRACKLESS:
         mostrar_dashboard()
-
     else:
-
-        st.error(
-            "No tienes permisos."
-        )
+        st.error("No tienes permisos.")
 
 
 # ==========================================================
@@ -304,26 +259,16 @@ elif menu == "Dashboard":
 elif menu == "Registro Trackless":
 
     if dni == DNI_ADMIN_TRACKLESS:
-
         registro_trackless()
-
     else:
-
-        st.error(
-            "No tienes permisos para Trackless."
-        )
+        st.error("No tienes permisos para Trackless.")
 
 elif menu == "Dashboard Trackless":
 
     if dni == DNI_ADMIN_TRACKLESS:
-
         mostrar_dashboard_trackless()
-
     else:
-
-        st.error(
-            "No tienes permisos para Trackless."
-        )
+        st.error("No tienes permisos para Trackless.")
 
 
 # ==========================================================
@@ -341,42 +286,27 @@ elif menu == "Registro Lucarbal":
 
     else:
 
-        st.error(
-            "Solo técnicos Lucarbal pueden registrar eventos."
-        )
+        st.error("Solo técnicos Lucarbal pueden registrar eventos.")
 
 elif menu == "Historial Lucarbal":
 
-    if (
-        empresa == "LUCARBAL"
-        or dni == DNI_ADMIN_TRACKLESS
-    ):
-
+    if empresa == "LUCARBAL" or dni == DNI_ADMIN_TRACKLESS:
         mostrar_historial_lucarbal()
-
     else:
-
-        st.error(
-            "No tienes permisos para ver Historial Lucarbal."
-        )
+        st.error("No tienes permisos para ver Historial Lucarbal.")
 
 elif menu == "Dashboard Lucarbal":
 
     if (
         empresa == "LUCARBAL"
-        and rol in [
-            "PLANNER",
-            "ADMIN"
-        ]
+        and rol in ["PLANNER", "ADMIN"]
     ) or dni == DNI_ADMIN_TRACKLESS:
 
         mostrar_dashboard_lucarbal()
 
     else:
 
-        st.error(
-            "No tienes permisos para ver Dashboard Lucarbal."
-        )
+        st.error("No tienes permisos para ver Dashboard Lucarbal.")
 
 
 # ==========================================================
@@ -387,74 +317,50 @@ elif menu == "Registro Mantto Planta Móvil":
 
     if (
         empresa == "LIVERH"
-        and rol in [
-            "TECNICO",
-            "ADMIN",
-            "PLANNER"
-        ]
+        and rol in ["TECNICO", "ADMIN", "PLANNER"]
     ) or dni == DNI_ADMIN_TRACKLESS:
 
         registro_planta_movil()
 
     else:
 
-        st.error(
-            "No tienes permisos para registrar mantenimiento de Planta Móvil."
-        )
+        st.error("No tienes permisos para registrar mantenimiento de Planta Móvil.")
 
 elif menu == "Historial Mantto Planta Móvil":
 
     if (
         empresa == "LIVERH"
-        and rol in [
-            "TECNICO",
-            "ADMIN",
-            "PLANNER"
-        ]
+        and rol in ["TECNICO", "SUPERVISOR", "ADMIN", "PLANNER"]
     ) or dni == DNI_ADMIN_TRACKLESS:
 
         mostrar_historial_planta_movil()
 
     else:
 
-        st.error(
-            "No tienes permisos para ver el historial de Planta Móvil."
-        )
+        st.error("No tienes permisos para ver el historial de Planta Móvil.")
 
 elif menu == "Registro Despacho Mixers":
 
     if (
         empresa == "LIVERH"
-        and rol in [
-            "SUPERVISOR",
-            "ADMIN",
-            "PLANNER"
-        ]
+        and rol in ["SUPERVISOR", "ADMIN", "PLANNER"]
     ) or dni == DNI_ADMIN_TRACKLESS:
 
         registro_despacho_mixers()
 
     else:
 
-        st.error(
-            "No tienes permisos para registrar despacho de mixers."
-        )
+        st.error("No tienes permisos para registrar despacho de mixers.")
 
 elif menu == "Historial Despacho Mixers":
 
     if (
         empresa == "LIVERH"
-        and rol in [
-            "SUPERVISOR",
-            "ADMIN",
-            "PLANNER"
-        ]
+        and rol in ["SUPERVISOR", "ADMIN", "PLANNER"]
     ) or dni == DNI_ADMIN_TRACKLESS:
 
         mostrar_historial_despacho_mixers()
 
     else:
 
-        st.error(
-            "No tienes permisos para ver el historial de despacho de mixers."
-        )
+        st.error("No tienes permisos para ver el historial de despacho de mixers.")
