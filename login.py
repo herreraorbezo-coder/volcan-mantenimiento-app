@@ -14,6 +14,18 @@ from styles import (
 
 
 # ==========================================================
+# ROLES VÁLIDOS
+# ==========================================================
+
+ROLES_VALIDOS = [
+    "ADMIN",
+    "PLANNER",
+    "TECNICO",
+    "SUPERVISOR"
+]
+
+
+# ==========================================================
 # INICIALIZAR SESSION STATE
 # ==========================================================
 
@@ -102,6 +114,7 @@ def mostrar_login():
             ⚙️ Bombas &nbsp; | &nbsp;
             🚜 Trackless &nbsp; | &nbsp;
             🚛 Lucarbal &nbsp; | &nbsp;
+            🏗️ Planta Móvil &nbsp; | &nbsp;
             📷 Evidencias
         </div>
 
@@ -123,7 +136,7 @@ def mostrar_login():
 
     if ingresar:
 
-        dni = dni.strip()
+        dni = str(dni).strip()
 
         if dni == "":
 
@@ -177,15 +190,17 @@ def mostrar_login():
                 st.stop()
 
         # ==================================================
-        # LIMPIEZA
+        # LIMPIEZA GENERAL
         # ==================================================
 
         for col in [
 
             "dni",
-            "estado",
+            "nombre",
+            "rol",
+            "cargo",
             "empresa",
-            "rol"
+            "estado"
 
         ]:
 
@@ -198,7 +213,62 @@ def mostrar_login():
             )
 
         # ==================================================
-        # VALIDACIÓN
+        # NORMALIZAR CAMPOS CLAVE
+        # ==================================================
+
+        df_users["dni"] = (
+
+            df_users["dni"]
+            .str.replace(".0", "", regex=False)
+            .str.strip()
+
+        )
+
+        df_users["rol"] = (
+
+            df_users["rol"]
+            .str.upper()
+            .str.strip()
+
+        )
+
+        df_users["empresa"] = (
+
+            df_users["empresa"]
+            .str.upper()
+            .str.strip()
+
+        )
+
+        df_users["estado"] = (
+
+            df_users["estado"]
+            .str.upper()
+            .str.strip()
+
+        )
+
+        # ==================================================
+        # VALIDAR ROL
+        # ==================================================
+
+        usuarios_rol_invalido = df_users[
+
+            ~df_users["rol"].isin(
+                ROLES_VALIDOS
+            )
+
+        ]
+
+        if not usuarios_rol_invalido.empty:
+
+            st.warning(
+                "⚠️ Existen usuarios con rol no válido en la hoja usuarios. "
+                "Roles permitidos: ADMIN, PLANNER, TECNICO, SUPERVISOR."
+            )
+
+        # ==================================================
+        # VALIDACIÓN USUARIO ACTIVO
         # ==================================================
 
         validacion = df_users[
@@ -207,10 +277,14 @@ def mostrar_login():
 
             &
 
+            (df_users["estado"] == "ACTIVO")
+
+            &
+
             (
-                df_users["estado"]
-                .str.upper()
-                == "ACTIVO"
+                df_users["rol"].isin(
+                    ROLES_VALIDOS
+                )
             )
         ]
 
@@ -229,7 +303,7 @@ def mostrar_login():
 
                 st.session_state.usuario = str(
                     usuario_data["usuario"]
-                )
+                ).strip()
 
             else:
 
@@ -237,23 +311,23 @@ def mostrar_login():
 
             st.session_state.nombre = str(
                 usuario_data["nombre"]
-            )
+            ).strip()
 
             st.session_state.rol = str(
                 usuario_data["rol"]
-            )
+            ).upper().strip()
 
             st.session_state.cargo = str(
                 usuario_data["cargo"]
-            )
+            ).strip()
 
             st.session_state.empresa = str(
                 usuario_data["empresa"]
-            )
+            ).upper().strip()
 
             st.success(
                 f"Bienvenido "
-                f"{usuario_data['nombre']}"
+                f"{st.session_state.nombre}"
             )
 
             st.rerun()
@@ -261,7 +335,7 @@ def mostrar_login():
         else:
 
             st.error(
-                "DNI no registrado o usuario inactivo."
+                "DNI no registrado, usuario inactivo o rol no permitido."
             )
 
 
