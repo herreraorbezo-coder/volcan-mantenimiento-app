@@ -1,4 +1,4 @@
-#==========================================================
+# ==========================================================
 # DATABASE.PY
 # CONEXIÓN GOOGLE SHEETS
 # OPTIMIZADO PARA EVITAR ERROR 429
@@ -18,7 +18,9 @@ from config import (
     SHEET_FALLAS,
     SHEET_TRACKLESS,
     SHEET_EQUIPOS_LUCARBAL,
-    SHEET_LUCARBAL_EVENTOS
+    SHEET_LUCARBAL_EVENTOS,
+    SHEET_PLANTA_MOVIL_EVENTOS,
+    SHEET_DESPACHO_MIXERS
 )
 
 SCOPES = [
@@ -53,7 +55,9 @@ def obtener_hojas():
         "fallas": sheet.worksheet(SHEET_FALLAS),
         "trackless": sheet.worksheet(SHEET_TRACKLESS),
         "equipos_lucarbal": sheet.worksheet(SHEET_EQUIPOS_LUCARBAL),
-        "lucarbal_eventos": sheet.worksheet(SHEET_LUCARBAL_EVENTOS)
+        "lucarbal_eventos": sheet.worksheet(SHEET_LUCARBAL_EVENTOS),
+        "planta_movil_eventos": sheet.worksheet(SHEET_PLANTA_MOVIL_EVENTOS),
+        "despacho_mixers": sheet.worksheet(SHEET_DESPACHO_MIXERS)
     }
 
 
@@ -103,6 +107,18 @@ def cargar_lucarbal_eventos():
     return pd.DataFrame(ws.get_all_records())
 
 
+@st.cache_data(ttl=30)
+def cargar_planta_movil_eventos():
+    ws = obtener_hojas()["planta_movil_eventos"]
+    return pd.DataFrame(ws.get_all_records())
+
+
+@st.cache_data(ttl=30)
+def cargar_despacho_mixers():
+    ws = obtener_hojas()["despacho_mixers"]
+    return pd.DataFrame(ws.get_all_records())
+
+
 # ==========================================================
 # GUARDAR DATOS
 # ==========================================================
@@ -123,6 +139,18 @@ def guardar_lucarbal_evento(datos):
     ws = obtener_hojas()["lucarbal_eventos"]
     ws.append_row(datos, value_input_option="USER_ENTERED")
     cargar_lucarbal_eventos.clear()
+
+
+def guardar_planta_movil_evento(datos):
+    ws = obtener_hojas()["planta_movil_eventos"]
+    ws.append_row(datos, value_input_option="USER_ENTERED")
+    cargar_planta_movil_eventos.clear()
+
+
+def guardar_despacho_mixer(datos):
+    ws = obtener_hojas()["despacho_mixers"]
+    ws.append_row(datos, value_input_option="USER_ENTERED")
+    cargar_despacho_mixers.clear()
 
 
 # ==========================================================
@@ -177,6 +205,38 @@ def generar_id_lucarbal():
         return f"LUC-{len(df) + 1:06d}"
 
 
+def generar_id_planta_movil():
+
+    try:
+        ws = obtener_hojas()["planta_movil_eventos"]
+        total_filas = len(ws.col_values(1)) - 1
+        return f"PM-{total_filas + 1:06d}"
+
+    except Exception:
+        df = cargar_planta_movil_eventos()
+
+        if df.empty:
+            return "PM-000001"
+
+        return f"PM-{len(df) + 1:06d}"
+
+
+def generar_id_despacho_mixer():
+
+    try:
+        ws = obtener_hojas()["despacho_mixers"]
+        total_filas = len(ws.col_values(1)) - 1
+        return f"MIX-{total_filas + 1:06d}"
+
+    except Exception:
+        df = cargar_despacho_mixers()
+
+        if df.empty:
+            return "MIX-000001"
+
+        return f"MIX-{len(df) + 1:06d}"
+
+
 # ==========================================================
 # REFRESCAR CACHE MANUALMENTE
 # ==========================================================
@@ -190,7 +250,9 @@ def refrescar_cache_datos():
         cargar_fallas,
         cargar_trackless,
         cargar_equipos_lucarbal,
-        cargar_lucarbal_eventos
+        cargar_lucarbal_eventos,
+        cargar_planta_movil_eventos,
+        cargar_despacho_mixers
     ]
 
     for funcion in funciones_cache:
