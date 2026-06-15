@@ -3,7 +3,7 @@
 # CONFIGURACIÓN GENERAL - VOLCAN APP
 # ==========================================================
 
-APP_NAME = "VOLCAN - Sistema de Gestión de Bombeo"
+APP_NAME = "VOLCAN - Sistema de Gestión de Mantenimiento"
 LOGIN_TITLE = "MANTENIMIENTO VOLCAN"
 
 LOGO_PATH = "assets/logo_volcan.png"
@@ -18,11 +18,18 @@ SHEET_FALLAS = "catalogo_fallas"
 SHEET_TRACKLESS = "trackless"
 
 # ==========================================
-# NUEVO LUCARBAL
+# LUCARBAL
 # ==========================================
 
 SHEET_EQUIPOS_LUCARBAL = "equipos_lucarbal"
 SHEET_LUCARBAL_EVENTOS = "lucarbal_eventos"
+
+# ==========================================
+# PLANTA MÓVIL - LIVERH
+# ==========================================
+
+SHEET_PLANTA_MOVIL_EVENTOS = "planta_movil_eventos"
+SHEET_DESPACHO_MIXERS = "despacho_mixers"
 
 # ==========================================
 
@@ -31,7 +38,8 @@ DRIVE_FOLDER_ID = "1SQm4DWE9R7G0BgraPnYg-sELCCw7edC2"
 ROLES = {
     "ADMIN": "Supervisor de Mantenimiento",
     "PLANNER": "Planeamiento / Practicante",
-    "TECNICO": "Técnico Mecánico"
+    "TECNICO": "Técnico Mecánico",
+    "SUPERVISOR": "Supervisor Contratista"
 }
 
 ESTADOS = [
@@ -47,13 +55,29 @@ ESTADOS_LUCARBAL = [
     "STAND BY"
 ]
 
+ESTADOS_PLANTA_MOVIL = [
+    "OPERATIVO",
+    "OPERATIVO CON OBSERVACIÓN",
+    "INOPERATIVO",
+    "EN SEGUIMIENTO",
+    "PENDIENTE"
+]
+
+ESTADOS_DESPACHO_MIXERS = [
+    "DESPACHADO",
+    "PENDIENTE",
+    "ANULADO",
+    "CON OBSERVACIÓN"
+]
+
 TIPOS_MANTENIMIENTO = [
     "PREVENTIVO",
     "CORRECTIVO"
 ]
 
 SISTEMAS = [
-    "BOMBEO"
+    "BOMBEO",
+    "PLANTA MÓVIL"
 ]
 
 PAGE_TITLE = "VOLCAN APP"
