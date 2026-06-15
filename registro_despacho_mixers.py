@@ -257,14 +257,10 @@ def registro_despacho_mixers():
     codigo_cognos = MIXERS_COGNOS[mixer]
 
     with col_codigo:
-
-        st.text_input(
-            "Código COGNOS",
-            value=codigo_cognos,
-            disabled=True,
-            key=f"codigo_cognos_despacho_{reset_id}"
-        )
-
+        st.markdown("**Código COGNOS**")
+        st.success(
+            codigo_cognos
+    )
     # ======================================================
     # TIEMPOS
     # ======================================================
