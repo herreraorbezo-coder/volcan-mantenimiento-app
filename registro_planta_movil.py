@@ -41,13 +41,16 @@ AREAS_PLANTA_MOVIL = {
         "Motor bomba aditivo",
         "Motor bomba agua",
         "Motores mezclador",
+        "Filtro de la bomba de aditivo",
+        "Motor Bomba de Engrase",
         "Mariposas de descarga - balanza de cemento"
     ],
     "Área 3 - Faja Transportadora": [
         "Polines",
         "Chute de descarga",
         "Limpiador de faja",
-        "Motor de descarga"
+        "Motor de descarga",
+        "Pull Cord"
     ]
 }
 
