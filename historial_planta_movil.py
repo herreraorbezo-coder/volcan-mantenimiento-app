@@ -7,15 +7,10 @@ import streamlit as st
 import pandas as pd
 import base64
 import html
-
 import streamlit.components.v1 as components
 
 from database import cargar_planta_movil_eventos
 
-
-# ==========================================================
-# LIMPIAR FOTO BASE64
-# ==========================================================
 
 def obtener_base64_limpio(foto_base64):
 
@@ -24,7 +19,7 @@ def obtener_base64_limpio(foto_base64):
 
     foto_base64 = foto_base64.strip()
 
-    if foto_base64 in ["", "SIN FOTO", "nan", "None"]:
+    if foto_base64 in ["", "SIN FOTO", "nan", "None", "N/D"]:
         return None
 
     if "base64," in foto_base64:
@@ -33,28 +28,26 @@ def obtener_base64_limpio(foto_base64):
     try:
         base64.b64decode(foto_base64)
         return foto_base64
-
     except Exception:
         return None
 
 
-# ==========================================================
-# LIMPIAR TEXTO
-# ==========================================================
-
-def limpiar_texto(valor, defecto="N/D"):
+def limpiar_texto(valor, defecto=""):
 
     texto = str(valor).strip()
 
-    if texto in ["", "nan", "None"]:
+    if texto in ["", "nan", "None", "N/D"]:
         return defecto
 
     return html.escape(texto)
 
 
-# ==========================================================
-# COLOR POR ESTADO
-# ==========================================================
+def tiene_dato(valor):
+
+    valor = str(valor).strip()
+
+    return valor not in ["", "nan", "None", "N/D"]
+
 
 def color_estado(estado):
 
@@ -78,9 +71,37 @@ def color_estado(estado):
     return "#616161"
 
 
-# ==========================================================
-# MOSTRAR HISTORIAL
-# ==========================================================
+def color_tipo_registro(tipo_registro):
+
+    tipo = str(tipo_registro).upper().strip()
+
+    if "LIMPIEZA" in tipo:
+        return "#00ACC1"
+
+    if "ENGRASE" in tipo:
+        return "#F57C00"
+
+    if "PARADA" in tipo:
+        return "#C62828"
+
+    if "INTERVENCIÓN" in tipo or "INTERVENCION" in tipo:
+        return "#F2B705"
+
+    return "#F2B705"
+
+
+def linea_info(label, valor):
+
+    if not tiene_dato(valor):
+        return ""
+
+    return f"""
+    <div class="info-line">
+        <span class="info-label">{label}:</span>
+        <span class="info-value">{valor}</span>
+    </div>
+    """
+
 
 def mostrar_historial_planta_movil():
 
@@ -148,7 +169,6 @@ def mostrar_historial_planta_movil():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-
         tipo_registro_filtro = st.selectbox(
             "Tipo registro",
             ["TODOS"] + sorted(
@@ -160,7 +180,6 @@ def mostrar_historial_planta_movil():
         )
 
     with col2:
-
         area = st.selectbox(
             "Área",
             ["TODOS"] + sorted(
@@ -172,7 +191,6 @@ def mostrar_historial_planta_movil():
         )
 
     with col3:
-
         equipo = st.selectbox(
             "Equipo / punto",
             ["TODOS"] + sorted(
@@ -184,7 +202,6 @@ def mostrar_historial_planta_movil():
         )
 
     with col4:
-
         estado = st.selectbox(
             "Estado",
             ["TODOS"] + sorted(
@@ -196,7 +213,6 @@ def mostrar_historial_planta_movil():
         )
 
     with col5:
-
         rango = st.selectbox(
             "Periodo",
             [
@@ -269,87 +285,32 @@ def mostrar_historial_planta_movil():
 
     for _, row in df_filtrado.iterrows():
 
-        id_evento = limpiar_texto(
-            row.get("id_evento", "")
-        )
-
+        id_evento = limpiar_texto(row.get("id_evento", ""))
         fecha = row["fecha"].strftime("%d/%m/%Y")
+        turno = limpiar_texto(row.get("turno", ""))
+        tipo_registro = limpiar_texto(row.get("tipo_registro", ""))
+        area_txt = limpiar_texto(row.get("area", ""))
+        equipo_txt = limpiar_texto(row.get("equipo_punto", ""))
+        tipo_intervencion = limpiar_texto(row.get("tipo_intervencion", ""))
+        motivo_parada = limpiar_texto(row.get("motivo_parada", ""))
+        tipo_lubricante = limpiar_texto(row.get("tipo_lubricante", ""))
+        hora_inicio = limpiar_texto(row.get("hora_inicio", ""))
+        hora_fin = limpiar_texto(row.get("hora_fin", ""))
+        tiempo_parada_min = limpiar_texto(row.get("tiempo_parada_min", ""))
+        tecnico = limpiar_texto(row.get("tecnico", ""))
+        apoyo = limpiar_texto(row.get("apoyo", ""))
+        requiere_repuesto = limpiar_texto(row.get("requiere_repuesto", ""))
+        repuesto_requerido = limpiar_texto(row.get("repuesto_requerido", ""))
+        detalle = limpiar_texto(row.get("detalle", "Sin detalle registrado."))
+        estado_txt = limpiar_texto(row.get("estado", ""))
+        foto_base64 = obtener_base64_limpio(row.get("evidencia", ""))
 
-        turno = limpiar_texto(
-            row.get("turno", "")
-        )
-
-        tipo_registro = limpiar_texto(
-            row.get("tipo_registro", "")
-        )
-
-        area_txt = limpiar_texto(
-            row.get("area", "")
-        )
-
-        equipo_txt = limpiar_texto(
-            row.get("equipo_punto", "")
-        )
-
-        tipo_intervencion = limpiar_texto(
-            row.get("tipo_intervencion", "")
-        )
-
-        motivo_parada = limpiar_texto(
-            row.get("motivo_parada", "")
-        )
-
-        tipo_lubricante = limpiar_texto(
-            row.get("tipo_lubricante", "")
-        )
-
-        hora_inicio = limpiar_texto(
-            row.get("hora_inicio", "")
-        )
-
-        hora_fin = limpiar_texto(
-            row.get("hora_fin", "")
-        )
-
-        tiempo_parada_min = limpiar_texto(
-            row.get("tiempo_parada_min", "0")
-        )
-
-        tecnico = limpiar_texto(
-            row.get("tecnico", "")
-        )
-
-        apoyo = limpiar_texto(
-            row.get("apoyo", "")
-        )
-
-        requiere_repuesto = limpiar_texto(
-            row.get("requiere_repuesto", "NO")
-        )
-
-        repuesto_requerido = limpiar_texto(
-            row.get("repuesto_requerido", "NINGUNO")
-        )
-
-        detalle = limpiar_texto(
-            row.get("detalle", "Sin detalle registrado.")
-        )
-
-        estado_txt = limpiar_texto(
-            row.get("estado", "")
-        )
-
-        foto_base64 = obtener_base64_limpio(
-            row.get("evidencia", "")
-        )
-
-        color = color_estado(
-            estado_txt
-        )
+        color = color_estado(estado_txt)
+        color_borde = color_tipo_registro(tipo_registro)
 
         titulo_principal = equipo_txt
 
-        if equipo_txt in ["", "N/D"]:
+        if not tiene_dato(titulo_principal):
             titulo_principal = tipo_registro
 
         if foto_base64:
@@ -366,6 +327,41 @@ def mostrar_historial_planta_movil():
             bloque_imagen = """
             <div class="no-image">
                 📷<br>Sin evidencia
+            </div>
+            """
+
+        info_adicional = ""
+
+        info_adicional += linea_info("Equipo / punto", equipo_txt)
+        info_adicional += linea_info("Motivo parada", motivo_parada)
+        info_adicional += linea_info("Lubricante", tipo_lubricante)
+
+        if requiere_repuesto.upper() == "SI":
+            info_adicional += linea_info(
+                "Requiere repuesto/material",
+                requiere_repuesto
+            )
+            info_adicional += linea_info(
+                "Repuesto/material requerido",
+                repuesto_requerido
+            )
+
+        bloque_info_adicional = ""
+
+        if tiene_dato(info_adicional):
+            bloque_info_adicional = f"""
+            <div class="repo-section-title">Información adicional</div>
+            <div class="repo-text">
+                {info_adicional}
+            </div>
+            """
+
+        bloque_apoyo = ""
+
+        if tiene_dato(apoyo):
+            bloque_apoyo = f"""
+            <div class="footer-chip">
+                🤝 Apoyo: <b>{apoyo}</b>
             </div>
             """
 
@@ -431,7 +427,7 @@ def mostrar_historial_planta_movil():
                 background: linear-gradient(135deg, #1d1d1d 0%, #2a2a2a 100%);
                 border-radius: 16px;
                 padding: 16px 18px;
-                border-left: 7px solid #F2B705;
+                border-left: 7px solid {color_borde};
                 box-shadow: 0px 10px 28px rgba(0,0,0,0.35);
                 min-height: 260px;
             }}
@@ -496,7 +492,7 @@ def mostrar_historial_planta_movil():
             }}
 
             .repo-section-title {{
-                color: #F2B705;
+                color: {color_borde};
                 font-size: 13px;
                 font-weight: 900;
                 margin-top: 8px;
@@ -507,22 +503,36 @@ def mostrar_historial_planta_movil():
             .repo-text {{
                 color: #eeeeee;
                 font-size: 14px;
-                line-height: 1.42;
+                line-height: 1.45;
+            }}
+
+            .info-line {{
+                margin-bottom: 3px;
+            }}
+
+            .info-label {{
+                color: #ffffff;
+                font-weight: 800;
+            }}
+
+            .info-value {{
+                color: #eeeeee;
+                font-weight: 600;
             }}
 
             .repo-footer {{
-                margin-top: 12px;
-                color: #bdbdbd;
-                font-size: 12px;
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
             }}
 
-            .repo-alert {{
-                margin-top: 8px;
-                background: rgba(245, 124, 0, 0.18);
-                border-left: 4px solid #F57C00;
-                padding: 8px 10px;
-                border-radius: 8px;
+            .footer-chip {{
+                background: rgba(255,255,255,0.09);
+                border: 1px solid rgba(255,255,255,0.12);
                 color: #ffffff;
+                border-radius: 12px;
+                padding: 8px 12px;
                 font-size: 13px;
                 font-weight: 700;
             }}
@@ -582,17 +592,14 @@ def mostrar_historial_planta_movil():
                     <div class="repo-section-title">Detalle técnico</div>
                     <div class="repo-text">{detalle}</div>
 
-                    <div class="repo-section-title">Información adicional</div>
-                    <div class="repo-text">
-                        <b>Equipo / punto:</b> {equipo_txt}<br>
-                        <b>Motivo parada:</b> {motivo_parada}<br>
-                        <b>Lubricante:</b> {tipo_lubricante}<br>
-                        <b>Requiere repuesto/material:</b> {requiere_repuesto}<br>
-                        <b>Repuesto/material requerido:</b> {repuesto_requerido}
-                    </div>
+                    {bloque_info_adicional}
 
                     <div class="repo-footer">
-                        Registrado por: <b>{tecnico}</b> · Apoyo: <b>{apoyo}</b>
+                        <div class="footer-chip">
+                            👨‍🔧 Registrado por: <b>{tecnico}</b>
+                        </div>
+
+                        {bloque_apoyo}
                     </div>
                 </div>
             </div>
