@@ -4,6 +4,8 @@
 # ==========================================================
 
 import streamlit as st
+import os
+import base64
 
 from database import cargar_usuarios
 from styles import (
@@ -19,10 +21,40 @@ from styles import (
 
 ROLES_VALIDOS = [
     "ADMIN",
+    "GERENTE",
     "PLANNER",
     "TECNICO",
     "SUPERVISOR"
 ]
+
+
+# ==========================================================
+# FOTO USUARIO
+# ==========================================================
+
+def obtener_foto_usuario(dni):
+
+    extensiones = [
+        "jpg",
+        "jpeg",
+        "png"
+    ]
+
+    for ext in extensiones:
+
+        ruta = f"assets/fotos_usuarios/{dni}.{ext}"
+
+        if os.path.exists(ruta):
+
+            with open(ruta, "rb") as imagen:
+
+                foto_base64 = base64.b64encode(
+                    imagen.read()
+                ).decode("utf-8")
+
+            return f"data:image/{ext};base64,{foto_base64}"
+
+    return None
 
 
 # ==========================================================
@@ -65,10 +97,6 @@ def mostrar_login():
         unsafe_allow_html=True
     )
 
-    # ======================================================
-    # LOGO
-    # ======================================================
-
     col1, col2, col3 = st.columns([1, 1, 1])
 
     with col2:
@@ -92,10 +120,6 @@ def mostrar_login():
         """,
         unsafe_allow_html=True
     )
-
-    # ======================================================
-    # DNI
-    # ======================================================
 
     dni = st.text_input(
         "DNI",
@@ -130,10 +154,6 @@ def mostrar_login():
         unsafe_allow_html=True
     )
 
-    # ======================================================
-    # VALIDACIÓN LOGIN
-    # ======================================================
-
     if ingresar:
 
         dni = str(dni).strip()
@@ -154,29 +174,21 @@ def mostrar_login():
 
             st.stop()
 
-        # ==================================================
-        # CARGAR USUARIOS
-        # ==================================================
-
         df_users = cargar_usuarios()
 
         df_users.columns = (
-
             df_users.columns
             .str.strip()
             .str.lower()
-
         )
 
         columnas_requeridas = [
-
             "dni",
             "nombre",
             "rol",
             "cargo",
             "empresa",
             "estado"
-
         ]
 
         for col in columnas_requeridas:
@@ -189,108 +201,69 @@ def mostrar_login():
 
                 st.stop()
 
-        # ==================================================
-        # LIMPIEZA GENERAL
-        # ==================================================
-
         for col in [
-
             "dni",
             "nombre",
             "rol",
             "cargo",
             "empresa",
             "estado"
-
         ]:
 
             df_users[col] = (
-
                 df_users[col]
                 .astype(str)
                 .str.strip()
-
             )
 
-        # ==================================================
-        # NORMALIZAR CAMPOS CLAVE
-        # ==================================================
-
         df_users["dni"] = (
-
             df_users["dni"]
             .str.replace(".0", "", regex=False)
             .str.strip()
-
         )
 
         df_users["rol"] = (
-
             df_users["rol"]
             .str.upper()
             .str.strip()
-
         )
 
         df_users["empresa"] = (
-
             df_users["empresa"]
             .str.upper()
             .str.strip()
-
         )
 
         df_users["estado"] = (
-
             df_users["estado"]
             .str.upper()
             .str.strip()
-
         )
 
-        # ==================================================
-        # VALIDAR ROL
-        # ==================================================
-
         usuarios_rol_invalido = df_users[
-
             ~df_users["rol"].isin(
                 ROLES_VALIDOS
             )
-
         ]
 
         if not usuarios_rol_invalido.empty:
 
             st.warning(
                 "⚠️ Existen usuarios con rol no válido en la hoja usuarios. "
-                "Roles permitidos: ADMIN, PLANNER, TECNICO, SUPERVISOR."
+                "Roles permitidos: ADMIN, GERENTE, PLANNER, TECNICO, SUPERVISOR."
             )
 
-        # ==================================================
-        # VALIDACIÓN USUARIO ACTIVO
-        # ==================================================
-
         validacion = df_users[
-
             (df_users["dni"] == dni)
-
             &
-
             (df_users["estado"] == "ACTIVO")
-
             &
-
             (
                 df_users["rol"].isin(
                     ROLES_VALIDOS
                 )
             )
         ]
-
-        # ==================================================
-        # LOGIN EXITOSO
-        # ==================================================
 
         if not validacion.empty:
 
@@ -326,8 +299,7 @@ def mostrar_login():
             ).upper().strip()
 
             st.success(
-                f"Bienvenido "
-                f"{st.session_state.nombre}"
+                f"Bienvenido {st.session_state.nombre}"
             )
 
             st.rerun()
@@ -355,6 +327,33 @@ def sidebar_usuario():
 
         st.markdown("---")
 
+        foto_usuario = obtener_foto_usuario(
+            st.session_state.dni
+        )
+
+        if foto_usuario:
+
+            st.markdown(
+                f"""
+                <div style="
+                    text-align:center;
+                    margin-top: 8px;
+                    margin-bottom: 24px;
+                ">
+                    <img src="{foto_usuario}"
+                         style="
+                            width:210px;
+                            height:210px;
+                            object-fit:cover;
+                            border-radius:50%;
+                            border:4px solid #ffffff;
+                            box-shadow:0px 10px 28px rgba(0,0,0,0.45);
+                         ">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
         st.success(
             st.session_state.nombre
         )
@@ -364,20 +363,17 @@ def sidebar_usuario():
         )
 
         st.info(
-            f"Rol: "
-            f"{st.session_state.rol}"
+            f"Rol: {st.session_state.rol}"
         )
 
         st.info(
-            f"Empresa: "
-            f"{st.session_state.empresa}"
+            f"Empresa: {st.session_state.empresa}"
         )
 
         if st.session_state.dni:
 
             st.caption(
-                f"DNI: "
-                f"{st.session_state.dni}"
+                f"DNI: {st.session_state.dni}"
             )
 
         st.markdown("---")
