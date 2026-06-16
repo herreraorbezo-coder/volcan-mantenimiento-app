@@ -162,10 +162,6 @@ def mostrar_historial_planta_movil():
         if col != "fecha":
             df[col] = df[col].astype(str).str.strip()
 
-    # ======================================================
-    # FILTROS
-    # ======================================================
-
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
@@ -279,10 +275,6 @@ def mostrar_historial_planta_movil():
 
     st.markdown("---")
 
-    # ======================================================
-    # TARJETAS VISUALES
-    # ======================================================
-
     for _, row in df_filtrado.iterrows():
 
         id_evento = limpiar_texto(row.get("id_evento", ""))
@@ -379,8 +371,8 @@ def mostrar_historial_planta_movil():
             .container {{
                 display: grid;
                 grid-template-columns: 240px 1fr;
-                gap: 18px;
-                margin-bottom: 18px;
+                gap: 16px;
+                margin-bottom: 14px;
             }}
 
             .image-box {{
@@ -389,7 +381,7 @@ def mostrar_historial_planta_movil():
                 padding: 10px;
                 border: 1px solid rgba(255,255,255,0.12);
                 box-shadow: 0px 8px 20px rgba(0,0,0,0.35);
-                height: 290px;
+                height: 265px;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -398,7 +390,7 @@ def mostrar_historial_planta_movil():
 
             .image-box img {{
                 max-width: 220px;
-                max-height: 235px;
+                max-height: 212px;
                 object-fit: contain;
                 border-radius: 10px;
             }}
@@ -414,7 +406,7 @@ def mostrar_historial_planta_movil():
                 background: #202020;
                 border: 1px dashed #616161;
                 border-radius: 14px;
-                height: 290px;
+                height: 265px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -426,60 +418,62 @@ def mostrar_historial_planta_movil():
             .repo-card {{
                 background: linear-gradient(135deg, #1d1d1d 0%, #2a2a2a 100%);
                 border-radius: 16px;
-                padding: 16px 18px;
+                padding: 13px 16px;
                 border-left: 7px solid {color_borde};
                 box-shadow: 0px 10px 28px rgba(0,0,0,0.35);
-                min-height: 260px;
+                min-height: 245px;
             }}
 
             .repo-header {{
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
             }}
 
             .repo-equipo {{
-                font-size: 26px;
+                font-size: 24px;
                 font-weight: 900;
                 color: #ffffff;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.4px;
+                line-height: 1.08;
             }}
 
             .repo-subtitle {{
                 color: #bdbdbd;
-                font-size: 13px;
+                font-size: 12px;
                 margin-top: 2px;
-                margin-bottom: 12px;
+                margin-bottom: 8px;
             }}
 
             .repo-estado {{
                 color: white;
-                padding: 7px 14px;
+                padding: 7px 13px;
                 border-radius: 20px;
                 font-weight: 800;
-                font-size: 13px;
+                font-size: 12px;
                 text-align: center;
-                min-width: 120px;
+                min-width: 115px;
             }}
 
             .repo-grid {{
                 display: grid;
                 grid-template-columns: repeat(6, 1fr);
-                gap: 10px;
-                margin-top: 12px;
-                margin-bottom: 14px;
+                gap: 8px;
+                margin-top: 9px;
+                margin-bottom: 9px;
             }}
 
             .repo-box {{
                 background: rgba(255,255,255,0.07);
-                border-radius: 10px;
-                padding: 10px;
+                border-radius: 9px;
+                padding: 7px 8px;
+                min-height: 54px;
             }}
 
             .repo-label {{
                 color: #9e9e9e;
-                font-size: 11px;
+                font-size: 10px;
                 font-weight: 700;
                 margin-bottom: 3px;
                 text-transform: uppercase;
@@ -487,27 +481,28 @@ def mostrar_historial_planta_movil():
 
             .repo-value {{
                 color: #ffffff;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 800;
+                line-height: 1.15;
             }}
 
             .repo-section-title {{
                 color: {color_borde};
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 900;
-                margin-top: 8px;
-                margin-bottom: 4px;
+                margin-top: 7px;
+                margin-bottom: 3px;
                 text-transform: uppercase;
             }}
 
             .repo-text {{
                 color: #eeeeee;
-                font-size: 14px;
-                line-height: 1.45;
+                font-size: 13px;
+                line-height: 1.35;
             }}
 
             .info-line {{
-                margin-bottom: 3px;
+                margin-bottom: 2px;
             }}
 
             .info-label {{
@@ -521,10 +516,10 @@ def mostrar_historial_planta_movil():
             }}
 
             .repo-footer {{
-                margin-top: 14px;
+                margin-top: 10px;
                 display: flex;
                 flex-wrap: wrap;
-                gap: 8px;
+                gap: 7px;
             }}
 
             .footer-chip {{
@@ -532,8 +527,8 @@ def mostrar_historial_planta_movil():
                 border: 1px solid rgba(255,255,255,0.12);
                 color: #ffffff;
                 border-radius: 12px;
-                padding: 8px 12px;
-                font-size: 13px;
+                padding: 7px 10px;
+                font-size: 12px;
                 font-weight: 700;
             }}
         </style>
@@ -609,6 +604,6 @@ def mostrar_historial_planta_movil():
 
         components.html(
             html_card,
-            height=365,
+            height=320,
             scrolling=False
         )
