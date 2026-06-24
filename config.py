@@ -18,6 +18,12 @@ SHEET_FALLAS = "catalogo_fallas"
 SHEET_TRACKLESS = "trackless"
 
 # ==========================================
+# VOLCAN - TALLER / APOYOS
+# ==========================================
+
+SHEET_VOLCAN_TALLER = "volcan_taller"
+
+# ==========================================
 # LUCARBAL
 # ==========================================
 
@@ -50,6 +56,12 @@ ESTADOS = [
     "EN SEGUIMIENTO"
 ]
 
+ESTADOS_TALLER_VOLCAN = [
+    "FINALIZADO",
+    "EN PROCESO",
+    "PENDIENTE"
+]
+
 ESTADOS_LUCARBAL = [
     "OPERATIVO",
     "INOPERATIVO",
@@ -79,6 +91,27 @@ TIPOS_MANTENIMIENTO = [
 SISTEMAS = [
     "BOMBEO",
     "PLANTA MÓVIL"
+]
+
+EMPRESAS_APOYO_VOLCAN = [
+    "VOLCAN",
+    "TAIR",
+    "LUCARBAL",
+    "SEPROCAL",
+    "LIVERH",
+    "MANTENIMIENTO ELÉCTRICO",
+    "OTROS"
+]
+
+AREAS_APOYO_VOLCAN = [
+    "TALLER",
+    "MINA",
+    "SOLDADURA",
+    "FABRICACIÓN",
+    "CORTE",
+    "MANTENIMIENTO MECÁNICO",
+    "MANTENIMIENTO ELÉCTRICO",
+    "OTROS"
 ]
 
 PAGE_TITLE = "VOLCAN APP"
