@@ -23,6 +23,7 @@ SHEET_TRACKLESS = "trackless"
 
 SHEET_EQUIPOS_LUCARBAL = "equipos_lucarbal"
 SHEET_LUCARBAL_EVENTOS = "lucarbal_eventos"
+SHEET_LUCARBAL_TALLER = "lucarbal_taller"
 
 # ==========================================
 # PLANTA MÓVIL - LIVERH
