@@ -1,6 +1,6 @@
 # ==========================================================
 # REGISTRO_OT.PY
-# REGISTRO DE EVENTO / FALLA DE BOMBA
+# REGISTRO DE EVENTO / FALLA DE BOMBA + TALLER VOLCAN
 # ==========================================================
 
 import streamlit as st
@@ -10,16 +10,29 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
 from zoneinfo import ZoneInfo
-def ahora_peru():
-    return datetime.now(ZoneInfo("America/Lima"))
 
 from database import (
     cargar_equipos,
     guardar_bitacora,
-    generar_id
+    guardar_volcan_taller,
+    generar_id,
+    generar_id_volcan_taller
 )
 
-from config import ESTADOS
+from config import (
+    ESTADOS,
+    ESTADOS_TALLER_VOLCAN,
+    EMPRESAS_APOYO_VOLCAN,
+    AREAS_APOYO_VOLCAN
+)
+
+
+# ==========================================================
+# FECHA / HORA PERÚ
+# ==========================================================
+
+def ahora_peru():
+    return datetime.now(ZoneInfo("America/Lima"))
 
 
 # ==========================================================
@@ -77,11 +90,9 @@ def convertir_foto_base64(archivo):
                 f"{foto_base64}"
             )
 
-            # LÍMITE GOOGLE SHEETS
             if len(resultado) < 49000:
                 return resultado
 
-            # REDUCCIÓN PROGRESIVA
             calidad -= 5
             ancho_max -= 80
             alto_max -= 80
@@ -95,7 +106,6 @@ def convertir_foto_base64(archivo):
             if alto_max < 300:
                 alto_max = 300
 
-            # ÚLTIMO INTENTO
             if (
                 calidad == 20
                 and ancho_max == 300
@@ -167,6 +177,33 @@ def convertir_hora(texto_hora):
 
 
 # ==========================================================
+# CALCULAR HORAS
+# ==========================================================
+
+def calcular_horas(fecha, hora_inicio, hora_fin):
+
+    inicio = datetime.combine(
+        fecha,
+        hora_inicio
+    )
+
+    fin = datetime.combine(
+        fecha,
+        hora_fin
+    )
+
+    if fin < inicio:
+        fin += timedelta(days=1)
+
+    horas = round(
+        (fin - inicio).total_seconds() / 3600,
+        2
+    )
+
+    return horas
+
+
+# ==========================================================
 # OBTENER LISTA DE APOYOS DISPONIBLES
 # ==========================================================
 
@@ -184,18 +221,10 @@ def obtener_apoyos_disponibles(tecnico_principal):
 
 
 # ==========================================================
-# REGISTRO OT
+# TAB EVENTO BOMBEO
 # ==========================================================
 
-def registro_ot():
-
-    st.title("⚙️ Registro de Evento - Sistema Bombeo")
-    st.markdown("---")
-
-    if "reset_form_evento" not in st.session_state:
-        st.session_state.reset_form_evento = 0
-
-    reset_id = st.session_state.reset_form_evento
+def mostrar_registro_bombeo(reset_id):
 
     df_equipos = cargar_equipos()
 
@@ -204,10 +233,6 @@ def registro_ot():
         .str.strip()
         .str.lower()
     )
-
-    # ======================================================
-    # FECHA Y TÉCNICO
-    # ======================================================
 
     st.markdown("### 📅 Datos generales")
 
@@ -231,10 +256,6 @@ def registro_ot():
             disabled=True,
             key=f"tecnico_principal_bombeo_{reset_id}"
         )
-
-    # ======================================================
-    # APOYO DE TÉCNICOS
-    # ======================================================
 
     apoyo_1 = ""
     apoyo_2 = ""
@@ -275,10 +296,6 @@ def registro_ot():
             )
 
     st.markdown("---")
-
-    # ======================================================
-    # SISTEMA Y EQUIPO
-    # ======================================================
 
     sistema = st.selectbox(
         "Sistema",
@@ -386,24 +403,10 @@ def registro_ot():
 
     if hora_falla and hora_subsanada:
 
-        inicio = datetime.combine(
+        tiempo_parada = calcular_horas(
             fecha_evento,
-            hora_falla
-        )
-
-        fin = datetime.combine(
-            fecha_evento,
+            hora_falla,
             hora_subsanada
-        )
-
-        if fin < inicio:
-            fin += timedelta(days=1)
-
-        tiempo_parada = round(
-            (
-                fin - inicio
-            ).total_seconds() / 3600,
-            2
         )
 
         st.info(
@@ -454,10 +457,6 @@ def registro_ot():
         ],
         key=f"causa_preliminar_bombeo_{reset_id}"
     )
-
-    # ======================================================
-    # REPUESTO REQUERIDO
-    # ======================================================
 
     repuesto_requerido = ""
 
@@ -578,3 +577,302 @@ def registro_ot():
         st.session_state.reset_form_evento += 1
 
         st.rerun()
+
+
+# ==========================================================
+# TAB ACTIVIDADES TALLER / APOYO VOLCAN
+# ==========================================================
+
+def mostrar_registro_taller_volcan(reset_id):
+
+    st.markdown("### 🏭 Actividades Taller / Apoyo Volcan")
+
+    tecnico_principal = str(st.session_state.nombre).strip()
+
+    col_fecha, col_turno = st.columns(2)
+
+    with col_fecha:
+
+        fecha_actividad = st.date_input(
+            "Fecha actividad",
+            value=ahora_peru().date(),
+            key=f"fecha_taller_volcan_{reset_id}"
+        )
+
+    with col_turno:
+
+        turno = st.selectbox(
+            "Turno",
+            [
+                "DIA",
+                "NOCHE"
+            ],
+            key=f"turno_taller_volcan_{reset_id}"
+        )
+
+    col_tec, col_empresa = st.columns(2)
+
+    with col_tec:
+
+        st.text_input(
+            "Técnico responsable",
+            value=tecnico_principal,
+            disabled=True,
+            key=f"tecnico_taller_volcan_{reset_id}"
+        )
+
+    with col_empresa:
+
+        empresa_apoyada = st.selectbox(
+            "Empresa / área apoyada",
+            EMPRESAS_APOYO_VOLCAN,
+            key=f"empresa_apoyada_volcan_{reset_id}"
+        )
+
+    area_apoyo = st.selectbox(
+        "Área / tipo de apoyo",
+        AREAS_APOYO_VOLCAN,
+        key=f"area_apoyo_volcan_{reset_id}"
+    )
+
+    st.markdown("### 👥 Apoyo técnico")
+
+    apoyo_1 = ""
+    apoyo_2 = ""
+
+    tuvo_apoyo = st.checkbox(
+        "¿Tuvo apoyo de otro técnico?",
+        key=f"tuvo_apoyo_taller_volcan_{reset_id}"
+    )
+
+    if tuvo_apoyo:
+
+        apoyos_disponibles = obtener_apoyos_disponibles(
+            tecnico_principal
+        )
+
+        col_ap1, col_ap2 = st.columns(2)
+
+        with col_ap1:
+
+            apoyo_1 = st.selectbox(
+                "Apoyo 1",
+                [""] + apoyos_disponibles,
+                key=f"apoyo_1_taller_volcan_{reset_id}"
+            )
+
+        apoyos_para_apoyo2 = [
+            tecnico
+            for tecnico in apoyos_disponibles
+            if tecnico != apoyo_1
+        ]
+
+        with col_ap2:
+
+            apoyo_2 = st.selectbox(
+                "Apoyo 2",
+                [""] + apoyos_para_apoyo2,
+                key=f"apoyo_2_taller_volcan_{reset_id}"
+            )
+
+    st.markdown("### ⏱ Tiempo trabajado")
+
+    col_h1, col_h2 = st.columns(2)
+
+    with col_h1:
+
+        hora_inicio_input = st.text_input(
+            "Hora inicio",
+            placeholder="Ejemplo: 800 → 08:00",
+            key=f"hora_inicio_taller_volcan_{reset_id}"
+        )
+
+    with col_h2:
+
+        hora_fin_input = st.text_input(
+            "Hora fin",
+            placeholder="Ejemplo: 1030 → 10:30",
+            key=f"hora_fin_taller_volcan_{reset_id}"
+        )
+
+    hora_inicio_txt = formatear_hora(
+        hora_inicio_input
+    )
+
+    hora_fin_txt = formatear_hora(
+        hora_fin_input
+    )
+
+    if hora_inicio_input:
+        st.caption(
+            f"Hora inicio detectada: {hora_inicio_txt}"
+        )
+
+    if hora_fin_input:
+        st.caption(
+            f"Hora fin detectada: {hora_fin_txt}"
+        )
+
+    hora_inicio = convertir_hora(
+        hora_inicio_txt
+    )
+
+    hora_fin = convertir_hora(
+        hora_fin_txt
+    )
+
+    tiempo_trabajo_h = None
+
+    if hora_inicio and hora_fin:
+
+        tiempo_trabajo_h = calcular_horas(
+            fecha_actividad,
+            hora_inicio,
+            hora_fin
+        )
+
+        st.info(
+            f"Tiempo trabajado: {tiempo_trabajo_h} horas"
+        )
+
+    elif hora_inicio_input or hora_fin_input:
+
+        st.warning(
+            "Ingrese hora válida. Ejemplo: 800, 0800 o 08:00"
+        )
+
+    st.markdown("### 📝 Detalle de actividad")
+
+    detalle = st.text_area(
+        "Detalle del trabajo realizado",
+        height=160,
+        placeholder=(
+            "Ejemplo: Apoyo en soldadura, fabricación de varillas, "
+            "corte de material, apoyo a contrata, apoyo a mantenimiento eléctrico..."
+        ),
+        key=f"detalle_taller_volcan_{reset_id}"
+    )
+
+    estado = st.selectbox(
+        "Estado",
+        ESTADOS_TALLER_VOLCAN,
+        key=f"estado_taller_volcan_{reset_id}"
+    )
+
+    evidencia = st.file_uploader(
+        "Subir evidencia fotográfica",
+        type=["jpg", "jpeg", "png"],
+        key=f"evidencia_taller_volcan_{reset_id}"
+    )
+
+    if evidencia is not None:
+
+        st.image(
+            evidencia,
+            caption="Vista previa de evidencia",
+            use_container_width=True
+        )
+
+    if st.button(
+        "Guardar Actividad Taller / Apoyo",
+        use_container_width=True,
+        key=f"btn_guardar_taller_volcan_{reset_id}"
+    ):
+
+        if hora_inicio is None:
+            st.error(
+                "Debes ingresar la hora de inicio."
+            )
+            st.stop()
+
+        if hora_fin is None:
+            st.error(
+                "Debes ingresar la hora fin."
+            )
+            st.stop()
+
+        if tiempo_trabajo_h is None:
+            st.error(
+                "No se pudo calcular el tiempo trabajado."
+            )
+            st.stop()
+
+        if tuvo_apoyo and apoyo_1.strip() == "":
+            st.error(
+                "Seleccionaste que tuvo apoyo, pero no ingresaste Apoyo 1."
+            )
+            st.stop()
+
+        if apoyo_1 != "" and apoyo_2 != "" and apoyo_1 == apoyo_2:
+            st.error(
+                "Apoyo 1 y Apoyo 2 no pueden ser el mismo técnico."
+            )
+            st.stop()
+
+        if detalle.strip() == "":
+            st.error(
+                "Debes ingresar el detalle del trabajo realizado."
+            )
+            st.stop()
+
+        id_taller = generar_id_volcan_taller()
+
+        evidencia_guardada = convertir_foto_base64(
+            evidencia
+        )
+
+        datos = [
+            id_taller,
+            str(fecha_actividad),
+            turno,
+            tecnico_principal,
+            apoyo_1,
+            apoyo_2,
+            empresa_apoyada,
+            area_apoyo,
+            hora_inicio_txt,
+            hora_fin_txt,
+            tiempo_trabajo_h,
+            detalle,
+            estado,
+            evidencia_guardada,
+            str(ahora_peru())
+        ]
+
+        guardar_volcan_taller(datos)
+
+        st.success(
+            "✅ Actividad de taller / apoyo registrada correctamente."
+        )
+
+        st.session_state.reset_form_evento += 1
+
+        st.rerun()
+
+
+# ==========================================================
+# REGISTRO OT PRINCIPAL
+# ==========================================================
+
+def registro_ot():
+
+    st.title("⚙️ Registro Mantenimiento Volcan")
+    st.markdown("---")
+
+    if "reset_form_evento" not in st.session_state:
+        st.session_state.reset_form_evento = 0
+
+    reset_id = st.session_state.reset_form_evento
+
+    tab_bombeo, tab_taller = st.tabs([
+        "⚙️ Registro Evento Bombas",
+        "🏭 Actividades Taller / Apoyo"
+    ])
+
+    with tab_bombeo:
+
+        mostrar_registro_bombeo(reset_id)
+
+    with tab_taller:
+
+        mostrar_registro_taller_volcan(reset_id)
