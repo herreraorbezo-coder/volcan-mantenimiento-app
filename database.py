@@ -17,6 +17,7 @@ from config import (
     SHEET_BITACORA,
     SHEET_FALLAS,
     SHEET_TRACKLESS,
+    SHEET_VOLCAN_TALLER,
     SHEET_EQUIPOS_LUCARBAL,
     SHEET_LUCARBAL_EVENTOS,
     SHEET_LUCARBAL_TALLER,
@@ -55,6 +56,7 @@ def obtener_hojas():
         "bitacora": sheet.worksheet(SHEET_BITACORA),
         "fallas": sheet.worksheet(SHEET_FALLAS),
         "trackless": sheet.worksheet(SHEET_TRACKLESS),
+        "volcan_taller": sheet.worksheet(SHEET_VOLCAN_TALLER),
         "equipos_lucarbal": sheet.worksheet(SHEET_EQUIPOS_LUCARBAL),
         "lucarbal_eventos": sheet.worksheet(SHEET_LUCARBAL_EVENTOS),
         "lucarbal_taller": sheet.worksheet(SHEET_LUCARBAL_TALLER),
@@ -94,6 +96,12 @@ def cargar_fallas():
 @st.cache_data(ttl=30)
 def cargar_trackless():
     ws = obtener_hojas()["trackless"]
+    return pd.DataFrame(ws.get_all_records())
+
+
+@st.cache_data(ttl=30)
+def cargar_volcan_taller():
+    ws = obtener_hojas()["volcan_taller"]
     return pd.DataFrame(ws.get_all_records())
 
 
@@ -141,6 +149,12 @@ def guardar_trackless(datos):
     ws = obtener_hojas()["trackless"]
     ws.append_row(datos, value_input_option="USER_ENTERED")
     cargar_trackless.clear()
+
+
+def guardar_volcan_taller(datos):
+    ws = obtener_hojas()["volcan_taller"]
+    ws.append_row(datos, value_input_option="USER_ENTERED")
+    cargar_volcan_taller.clear()
 
 
 def guardar_lucarbal_evento(datos):
@@ -201,6 +215,22 @@ def generar_id_trackless():
             return "TRK-000001"
 
         return f"TRK-{len(df) + 1:06d}"
+
+
+def generar_id_volcan_taller():
+
+    try:
+        ws = obtener_hojas()["volcan_taller"]
+        total_filas = len(ws.col_values(1)) - 1
+        return f"VT-{total_filas + 1:06d}"
+
+    except Exception:
+        df = cargar_volcan_taller()
+
+        if df.empty:
+            return "VT-000001"
+
+        return f"VT-{len(df) + 1:06d}"
 
 
 def generar_id_lucarbal():
@@ -279,6 +309,7 @@ def refrescar_cache_datos():
         cargar_bitacora,
         cargar_fallas,
         cargar_trackless,
+        cargar_volcan_taller,
         cargar_equipos_lucarbal,
         cargar_lucarbal_eventos,
         cargar_lucarbal_taller,
