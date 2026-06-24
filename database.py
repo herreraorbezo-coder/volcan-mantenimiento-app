@@ -19,6 +19,7 @@ from config import (
     SHEET_TRACKLESS,
     SHEET_EQUIPOS_LUCARBAL,
     SHEET_LUCARBAL_EVENTOS,
+    SHEET_LUCARBAL_TALLER,
     SHEET_PLANTA_MOVIL_EVENTOS,
     SHEET_DESPACHO_MIXERS
 )
@@ -56,6 +57,7 @@ def obtener_hojas():
         "trackless": sheet.worksheet(SHEET_TRACKLESS),
         "equipos_lucarbal": sheet.worksheet(SHEET_EQUIPOS_LUCARBAL),
         "lucarbal_eventos": sheet.worksheet(SHEET_LUCARBAL_EVENTOS),
+        "lucarbal_taller": sheet.worksheet(SHEET_LUCARBAL_TALLER),
         "planta_movil_eventos": sheet.worksheet(SHEET_PLANTA_MOVIL_EVENTOS),
         "despacho_mixers": sheet.worksheet(SHEET_DESPACHO_MIXERS)
     }
@@ -108,6 +110,12 @@ def cargar_lucarbal_eventos():
 
 
 @st.cache_data(ttl=30)
+def cargar_lucarbal_taller():
+    ws = obtener_hojas()["lucarbal_taller"]
+    return pd.DataFrame(ws.get_all_records())
+
+
+@st.cache_data(ttl=30)
 def cargar_planta_movil_eventos():
     ws = obtener_hojas()["planta_movil_eventos"]
     return pd.DataFrame(ws.get_all_records())
@@ -139,6 +147,12 @@ def guardar_lucarbal_evento(datos):
     ws = obtener_hojas()["lucarbal_eventos"]
     ws.append_row(datos, value_input_option="USER_ENTERED")
     cargar_lucarbal_eventos.clear()
+
+
+def guardar_lucarbal_taller(datos):
+    ws = obtener_hojas()["lucarbal_taller"]
+    ws.append_row(datos, value_input_option="USER_ENTERED")
+    cargar_lucarbal_taller.clear()
 
 
 def guardar_planta_movil_evento(datos):
@@ -205,6 +219,22 @@ def generar_id_lucarbal():
         return f"LUC-{len(df) + 1:06d}"
 
 
+def generar_id_lucarbal_taller():
+
+    try:
+        ws = obtener_hojas()["lucarbal_taller"]
+        total_filas = len(ws.col_values(1)) - 1
+        return f"TALLER-{total_filas + 1:06d}"
+
+    except Exception:
+        df = cargar_lucarbal_taller()
+
+        if df.empty:
+            return "TALLER-000001"
+
+        return f"TALLER-{len(df) + 1:06d}"
+
+
 def generar_id_planta_movil():
 
     try:
@@ -251,6 +281,7 @@ def refrescar_cache_datos():
         cargar_trackless,
         cargar_equipos_lucarbal,
         cargar_lucarbal_eventos,
+        cargar_lucarbal_taller,
         cargar_planta_movil_eventos,
         cargar_despacho_mixers
     ]
