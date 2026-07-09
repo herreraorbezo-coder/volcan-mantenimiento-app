@@ -286,18 +286,6 @@ def calcular_kpis(df, equipos, fecha_ini, fecha_fin, turno):
         mttr = horas_parada / eventos if eventos > 0 else 0
         mtbf = horas_operativas / eventos if eventos > 0 else 0
 
-        tiempo_respuesta_prom = (
-            df_eq["tiempo_respuesta"].mean()
-            if not df_eq.empty
-            else 0
-        )
-
-        tiempo_reparacion_prom = (
-            df_eq["tiempo_reparacion"].mean()
-            if not df_eq.empty
-            else 0
-        )
-
         resumen.append({
             "Familia": familia,
             "Marca": marca,
@@ -309,9 +297,7 @@ def calcular_kpis(df, equipos, fecha_ini, fecha_fin, turno):
             "Eventos": eventos,
             "Disponibilidad %": round(disponibilidad, 2),
             "MTTR h": round(mttr, 2),
-            "MTBF h": round(mtbf, 2),
-            "T. respuesta prom h": round(float(tiempo_respuesta_prom), 2),
-            "T. reparación prom h": round(float(tiempo_reparacion_prom), 2)
+            "MTBF h": round(mtbf, 2)
         })
 
     return pd.DataFrame(resumen)
@@ -502,9 +488,8 @@ def generar_pdf(
         "Equipo",
         "Tipo",
         "Técnico",
-        "Hora Parada",
-        "Hora Atención",
-        "Hora Fin",
+        "Inicio Parada",
+        "Hora Subsanada",
         "Estado",
         "Descripción"
     ]]
@@ -518,7 +503,6 @@ def generar_pdf(
             str(r.get("tipo_mantenimiento", ""))[:12],
             str(r.get("tecnico", ""))[:20],
             str(r.get("hora_falla", ""))[:7],
-            str(r.get("hora_inicio_atencion", ""))[:7],
             str(r.get("hora_subsanada", ""))[:7],
             str(r.get("estado_operativo", ""))[:12],
             Paragraph(str(r.get("descripcion", ""))[:220], estilo_desc)
@@ -896,18 +880,6 @@ def mostrar_dashboard_lucarbal():
 
     mtbf_global = horas_operativas / eventos if eventos > 0 else 0
 
-    t_resp_prom = (
-        df_filtrado["tiempo_respuesta"].mean()
-        if not df_filtrado.empty
-        else 0
-    )
-
-    t_rep_prom = (
-        df_filtrado["tiempo_reparacion"].mean()
-        if not df_filtrado.empty
-        else 0
-    )
-
     c1, c2, c3, c4 = st.columns(4)
 
     c1.metric(
@@ -930,7 +902,7 @@ def mostrar_dashboard_lucarbal():
         f"{mttr_global:.2f} h"
     )
 
-    c5, c6, c7, c8 = st.columns(4)
+    c5, c6 = st.columns(2)
 
     c5.metric(
         "MTBF estimado",
@@ -938,16 +910,6 @@ def mostrar_dashboard_lucarbal():
     )
 
     c6.metric(
-        "Tiempo respuesta prom.",
-        f"{t_resp_prom:.2f} h"
-    )
-
-    c7.metric(
-        "Tiempo reparación prom.",
-        f"{t_rep_prom:.2f} h"
-    )
-
-    c8.metric(
         "Equipos base",
         len(equipos_filtrados)
     )
@@ -1108,7 +1070,6 @@ def mostrar_dashboard_lucarbal():
         "tipo_mantenimiento",
         "tecnico",
         "hora_falla",
-        "hora_inicio_atencion",
         "hora_subsanada",
         "estado_operativo",
         "descripcion"
