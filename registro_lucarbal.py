@@ -149,7 +149,56 @@ def convertir_hora(texto_hora):
         return None
 
 
-def calcular_horas(fecha, hora_inicio, hora_fin):
+def hora_en_rango_turno(turno, hora):
+    """Valida si una hora pertenece al turno seleccionado."""
+
+    if hora is None:
+        return False
+
+    turno = str(turno).upper().strip()
+    minutos = hora.hour * 60 + hora.minute
+
+    # Turno día: 07:00 hasta 18:00
+    if turno == "DIA":
+        return 7 * 60 <= minutos <= 18 * 60
+
+    # Turno noche: 18:00 hasta 07:00 del día siguiente
+    if turno == "NOCHE":
+        return minutos >= 18 * 60 or minutos <= 7 * 60
+
+    return False
+
+
+def mensaje_regla_turno(turno):
+
+    if str(turno).upper().strip() == "DIA":
+        return "Turno DIA permitido: 07:00 a 18:00."
+
+    return (
+        "Turno NOCHE permitido: 18:00 a 07:00. "
+        "Use formato 24 horas. Ejemplo correcto: 21:00 a 23:00."
+    )
+
+
+def validar_horas_por_turno(turno, hora_inicio, hora_fin):
+    """Bloquea horas que no correspondan al turno seleccionado."""
+
+    if not hora_en_rango_turno(turno, hora_inicio):
+        return False, (
+            "La hora de inicio no corresponde al turno seleccionado. "
+            + mensaje_regla_turno(turno)
+        )
+
+    if not hora_en_rango_turno(turno, hora_fin):
+        return False, (
+            "La hora final/subsanada no corresponde al turno seleccionado. "
+            + mensaje_regla_turno(turno)
+        )
+
+    return True, ""
+
+
+def calcular_horas(fecha, hora_inicio, hora_fin, turno=None):
 
     inicio = datetime.combine(
         fecha,
@@ -161,7 +210,13 @@ def calcular_horas(fecha, hora_inicio, hora_fin):
         hora_fin
     )
 
-    if fin < inicio:
+    # Si el turno es noche y la hora final es menor o igual a la hora inicial,
+    # se entiende que terminó al día siguiente. Ejemplo: 23:00 a 01:00.
+    if str(turno).upper().strip() == "NOCHE" and fin <= inicio:
+        fin += timedelta(days=1)
+
+    # Compatibilidad con cálculos antiguos sin turno.
+    elif turno is None and fin < inicio:
         fin += timedelta(days=1)
 
     minutos = round(
@@ -440,6 +495,14 @@ def registro_lucarbal():
             "desde que el equipo paró hasta que quedó subsanado."
         )
 
+        if turno == "DIA":
+            st.info("🕒 Turno DIA: registre horas entre 07:00 y 18:00.")
+        else:
+            st.info(
+                "🌙 Turno NOCHE: registre en formato 24 horas entre 18:00 y 07:00. "
+                "Ejemplo: 21:00 a 23:00, 23:00 a 01:00 o 00:30 a 02:00."
+            )
+
         col_h1, col_h2 = st.columns(2)
 
         with col_h1:
@@ -493,16 +556,27 @@ def registro_lucarbal():
 
         if hora_falla and hora_sub:
 
-            _, tiempo_parada = calcular_horas(
-                fecha,
+            horas_validas, mensaje_validacion = validar_horas_por_turno(
+                turno,
                 hora_falla,
                 hora_sub
             )
 
-            st.metric(
-                "Tiempo total de parada",
-                f"{tiempo_parada} h"
-            )
+            if not horas_validas:
+                st.error(mensaje_validacion)
+            else:
+
+                _, tiempo_parada = calcular_horas(
+                    fecha,
+                    hora_falla,
+                    hora_sub,
+                    turno
+                )
+
+                st.metric(
+                    "Tiempo total de parada",
+                    f"{tiempo_parada} h"
+                )
 
         elif hora_falla_input or hora_sub_input:
             st.warning(
@@ -589,6 +663,16 @@ def registro_lucarbal():
 
             if tiempo_parada is None:
                 st.error("No se pudo calcular el tiempo total de parada.")
+                st.stop()
+
+            horas_validas, mensaje_validacion = validar_horas_por_turno(
+                turno,
+                hora_falla,
+                hora_sub
+            )
+
+            if not horas_validas:
+                st.error(mensaje_validacion)
                 st.stop()
 
             if descripcion.strip() == "":
@@ -735,6 +819,14 @@ def registro_lucarbal():
 
         st.markdown("### ⏱ TIEMPO DE ACTIVIDAD")
 
+        if turno_taller == "DIA":
+            st.info("🕒 Turno DIA: registre horas entre 07:00 y 18:00.")
+        else:
+            st.info(
+                "🌙 Turno NOCHE: registre en formato 24 horas entre 18:00 y 07:00. "
+                "Ejemplo: 21:00 a 23:00, 23:00 a 01:00 o 00:30 a 02:00."
+            )
+
         col_hi, col_hf = st.columns(2)
 
         with col_hi:
@@ -781,15 +873,26 @@ def registro_lucarbal():
 
         if hora_inicio and hora_fin:
 
-            tiempo_trabajo_min, tiempo_trabajo_h = calcular_horas(
-                fecha_taller,
+            horas_validas_taller, mensaje_validacion_taller = validar_horas_por_turno(
+                turno_taller,
                 hora_inicio,
                 hora_fin
             )
 
-            st.info(
-                f"Tiempo trabajado: {tiempo_trabajo_min} min / {tiempo_trabajo_h} h"
-            )
+            if not horas_validas_taller:
+                st.error(mensaje_validacion_taller)
+            else:
+
+                tiempo_trabajo_min, tiempo_trabajo_h = calcular_horas(
+                    fecha_taller,
+                    hora_inicio,
+                    hora_fin,
+                    turno_taller
+                )
+
+                st.info(
+                    f"Tiempo trabajado: {tiempo_trabajo_min} min / {tiempo_trabajo_h} h"
+                )
 
         elif hora_inicio_input or hora_fin_input:
             st.warning(
@@ -855,6 +958,16 @@ def registro_lucarbal():
 
             if tiempo_trabajo_min is None:
                 st.error("No se pudo calcular el tiempo trabajado.")
+                st.stop()
+
+            horas_validas_taller, mensaje_validacion_taller = validar_horas_por_turno(
+                turno_taller,
+                hora_inicio,
+                hora_fin
+            )
+
+            if not horas_validas_taller:
+                st.error(mensaje_validacion_taller)
                 st.stop()
 
             if detalle_taller.strip() == "":
