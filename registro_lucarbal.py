@@ -654,7 +654,7 @@ def registro_lucarbal():
 
     with tab_taller:
 
-        st.subheader("🏭 Registro de actividades de taller")
+        st.subheader("🏭 REGITRO DE ACTIVIDADES EN TALLER")
 
         if "reset_lucarbal_taller" not in st.session_state:
             st.session_state.reset_lucarbal_taller = 0
@@ -665,7 +665,7 @@ def registro_lucarbal():
         # DATOS GENERALES TALLER
         # ==================================================
 
-        st.markdown("### 📅 Datos generales")
+        st.markdown("### 📅 DATOS GENERALES")
 
         col_fecha_t, col_turno_t = st.columns(2)
 
@@ -708,7 +708,7 @@ def registro_lucarbal():
         # APOYOS TALLER
         # ==================================================
 
-        st.markdown("### 👥 Apoyo técnico")
+        st.markdown("### 👥 APOYO TÉCNICO")
 
         col_apoyo_t1, col_apoyo_t2 = st.columns(2)
 
@@ -733,7 +733,7 @@ def registro_lucarbal():
         # HORAS TALLER
         # ==================================================
 
-        st.markdown("### ⏱ Tiempo de actividad")
+        st.markdown("### ⏱ TIEMPO DE ACTIVIDAD")
 
         col_hi, col_hf = st.columns(2)
 
@@ -800,7 +800,7 @@ def registro_lucarbal():
         # DETALLE LIBRE TALLER
         # ==================================================
 
-        st.markdown("### 📝 Detalle del trabajo realizado")
+        st.markdown("### 📝 DETALLE DEL TRABAJO REALIZADO")
 
         detalle_taller = st.text_area(
             "Detalle de actividad realizada",
