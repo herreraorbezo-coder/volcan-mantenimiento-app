@@ -244,7 +244,7 @@ def obtener_apoyos_lucarbal(tecnico_actual):
 
 def registro_lucarbal():
 
-    st.title("🚛 Registro LUCARBAL")
+    st.title("🚛 REPORTE LUCARBAL")
     st.markdown("---")
 
     tecnico = str(st.session_state.nombre).strip()
@@ -265,7 +265,7 @@ def registro_lucarbal():
 
     with tab_mina:
 
-        st.subheader("🚛 Registro de mantenimiento en mina")
+        st.subheader("🚛 REGISTRO DE MANTENIMIENTO EN MINA")
 
         if "reset_lucarbal" not in st.session_state:
             st.session_state.reset_lucarbal = 0
@@ -305,7 +305,7 @@ def registro_lucarbal():
         # DATOS GENERALES
         # ==================================================
 
-        st.markdown("### 📅 Datos generales")
+        st.markdown("### 📅 DATOS GENERALES")
 
         col_fecha, col_turno = st.columns(2)
 
@@ -348,7 +348,7 @@ def registro_lucarbal():
         # APOYOS
         # ==================================================
 
-        st.markdown("### 👥 Apoyo técnico")
+        st.markdown("### 👥 APOYO TÉCNICO")
 
         col_apoyo_1, col_apoyo_2 = st.columns(2)
 
@@ -373,7 +373,7 @@ def registro_lucarbal():
         # EQUIPO
         # ==================================================
 
-        st.markdown("### 🚛 Selección de equipo")
+        st.markdown("### 🚛 SELECCIÓN DE EQUIPO")
 
         familias = sorted(
             df["familia_equipo"]
@@ -434,7 +434,7 @@ def registro_lucarbal():
         # HORAS
         # ==================================================
 
-        st.markdown("### ⏱ Registro de tiempos")
+        st.markdown("### ⏱ REGISTRO DE TIEMPOS")
         st.caption(
             "Para LUCARBAL se registrará solo el tiempo total de parada: "
             "desde que el equipo paró hasta que quedó subsanado."
@@ -513,7 +513,7 @@ def registro_lucarbal():
         # REPUESTOS
         # ==================================================
 
-        st.markdown("### 🔩 Repuestos")
+        st.markdown("### 🔩 REPUESTOS")
 
         requiere_repuesto = st.radio(
             "¿Requiere repuesto?",
@@ -538,7 +538,7 @@ def registro_lucarbal():
         # DESCRIPCIÓN
         # ==================================================
 
-        st.markdown("### 📝 Descripción")
+        st.markdown("### 📝 DESCRIPCIÓN")
 
         descripcion = st.text_area(
             "Descripción falla / trabajo realizado",
