@@ -435,26 +435,23 @@ def registro_lucarbal():
         # ==================================================
 
         st.markdown("### ⏱ Registro de tiempos")
+        st.caption(
+            "Para LUCARBAL se registrará solo el tiempo total de parada: "
+            "desde que el equipo paró hasta que quedó subsanado."
+        )
 
-        col_h1, col_h2, col_h3 = st.columns(3)
+        col_h1, col_h2 = st.columns(2)
 
         with col_h1:
             hora_falla_input = st.text_input(
-                "Hora que paró el equipo",
+                "Hora inicio de parada",
                 placeholder="715 → 07:15",
                 key=f"hf_{reset_id}"
             )
 
         with col_h2:
-            hora_atencion_input = st.text_input(
-                "Hora inicio atención",
-                placeholder="740 → 07:40",
-                key=f"ha_{reset_id}"
-            )
-
-        with col_h3:
             hora_sub_input = st.text_input(
-                "Hora fin atención",
+                "Hora subsanada",
                 placeholder="1530 → 15:30",
                 key=f"hs_{reset_id}"
             )
@@ -463,35 +460,29 @@ def registro_lucarbal():
             hora_falla_input
         )
 
-        hora_atencion_txt = formatear_hora(
-            hora_atencion_input
-        )
-
         hora_sub_txt = formatear_hora(
             hora_sub_input
         )
 
+        # Se mantienen estas variables vacías por compatibilidad con la hoja actual
+        # lucarbal_eventos, que todavía contiene columnas históricas de atención,
+        # respuesta y reparación. Ya no se solicitan ni se calculan en el formulario.
+        hora_atencion_txt = ""
+        tiempo_respuesta = ""
+        tiempo_reparacion = ""
+
         if hora_falla_input:
             st.caption(
-                f"Hora parada detectada: {hora_falla_txt}"
-            )
-
-        if hora_atencion_input:
-            st.caption(
-                f"Hora inicio atención detectada: {hora_atencion_txt}"
+                f"Hora inicio de parada detectada: {hora_falla_txt}"
             )
 
         if hora_sub_input:
             st.caption(
-                f"Hora fin atención detectada: {hora_sub_txt}"
+                f"Hora subsanada detectada: {hora_sub_txt}"
             )
 
         hora_falla = convertir_hora(
             hora_falla_txt
-        )
-
-        hora_atencion = convertir_hora(
-            hora_atencion_txt
         )
 
         hora_sub = convertir_hora(
@@ -499,22 +490,8 @@ def registro_lucarbal():
         )
 
         tiempo_parada = None
-        tiempo_respuesta = None
-        tiempo_reparacion = None
 
-        if hora_falla and hora_atencion and hora_sub:
-
-            _, tiempo_respuesta = calcular_horas(
-                fecha,
-                hora_falla,
-                hora_atencion
-            )
-
-            _, tiempo_reparacion = calcular_horas(
-                fecha,
-                hora_atencion,
-                hora_sub
-            )
+        if hora_falla and hora_sub:
 
             _, tiempo_parada = calcular_horas(
                 fecha,
@@ -522,24 +499,12 @@ def registro_lucarbal():
                 hora_sub
             )
 
-            c1, c2, c3 = st.columns(3)
-
-            c1.metric(
-                "Tiempo respuesta",
-                f"{tiempo_respuesta} h"
-            )
-
-            c2.metric(
-                "Tiempo reparación",
-                f"{tiempo_reparacion} h"
-            )
-
-            c3.metric(
-                "Tiempo total parada",
+            st.metric(
+                "Tiempo total de parada",
                 f"{tiempo_parada} h"
             )
 
-        elif hora_falla_input or hora_atencion_input or hora_sub_input:
+        elif hora_falla_input or hora_sub_input:
             st.warning(
                 "Ingrese horas válidas. Ejemplo: 715, 0715 o 07:15"
             )
@@ -618,12 +583,8 @@ def registro_lucarbal():
                 st.error("Debes ingresar la hora que paró el equipo.")
                 st.stop()
 
-            if hora_atencion is None:
-                st.error("Debes ingresar la hora de inicio de atención.")
-                st.stop()
-
             if hora_sub is None:
-                st.error("Debes ingresar la hora fin de atención.")
+                st.error("Debes ingresar la hora subsanada.")
                 st.stop()
 
             if tiempo_parada is None:
