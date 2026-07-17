@@ -43,6 +43,9 @@ AREAS_PLANTA_MOVIL = {
         "Motores mezclador",
         "Filtro de la bomba de aditivo",
         "Motor Bomba de Engrase",
+        "Motor de compresor",
+        "Filtro Regulador",
+        "Lubricador de Aire",
         "Mariposas de descarga - balanza de cemento"
     ],
     "Área 3 - Faja Transportadora": [
