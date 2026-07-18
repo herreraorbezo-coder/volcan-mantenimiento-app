@@ -237,35 +237,56 @@ def actualizar_registro_por_id(
     modificado_por: str = "",
     fecha_modificacion: str = "",
 ) -> bool:
-    """Actualiza solo las columnas indicadas y conserva el resto de la fila."""
-    if not registro_id or not cambios:
+    """
+    Actualiza un registro existente sin crear columnas automáticamente.
+
+    Esta implementación evita Worksheet.update(), batch_update() y la creación
+    dinámica de encabezados, para garantizar compatibilidad con gspread en
+    Streamlit Cloud. Solo actualiza columnas que ya existen en Google Sheets.
+    """
+    if not registro_id or not isinstance(cambios, dict) or not cambios:
         return False
 
     ws = obtener_hojas()[clave_hoja]
-    auditoria = {
-        "ultima_modificacion": fecha_modificacion,
-        "modificado_por": modificado_por,
-    }
-    cambios_finales = {**cambios, **auditoria}
-    mapa = _asegurar_columnas(ws, cambios_finales.keys())
+    mapa = _mapa_encabezados(ws)
+
     numero_fila = _buscar_fila_por_id(ws, columna_id, registro_id)
-
     if numero_fila is None:
-        raise ValueError(f"No se encontró el registro {registro_id} en {clave_hoja}.")
+        raise ValueError(
+            f"No se encontró el registro {registro_id} en la hoja {clave_hoja}."
+        )
 
-    actualizaciones = []
+    cambios_finales = dict(cambios)
+
+    # Auditoría opcional: solo se escribe si las columnas ya existen.
+    if _normalizar_encabezado("ultima_modificacion") in mapa:
+        cambios_finales["ultima_modificacion"] = fecha_modificacion
+
+    if _normalizar_encabezado("modificado_por") in mapa:
+        cambios_finales["modificado_por"] = modificado_por
+
+    actualizados = 0
+    columnas_inexistentes = []
+
     for columna, valor in cambios_finales.items():
-        indice = mapa.get(_normalizar_encabezado(columna))
-        if indice:
-            actualizaciones.append({
-                "range": rowcol_to_a1(numero_fila, indice),
-                "values": [["" if valor is None else valor]],
-            })
+        nombre_normalizado = _normalizar_encabezado(columna)
+        indice_columna = mapa.get(nombre_normalizado)
 
-    if not actualizaciones:
-        return False
+        if not indice_columna:
+            columnas_inexistentes.append(str(columna))
+            continue
 
-    ws.batch_update(actualizaciones, value_input_option="USER_ENTERED")
+        valor_seguro = "" if valor is None else valor
+        ws.update_cell(numero_fila, indice_columna, valor_seguro)
+        actualizados += 1
+
+    if actualizados == 0:
+        raise ValueError(
+            "No se actualizó ningún campo porque los nombres de columnas del "
+            "código no coinciden con los encabezados de Google Sheets. "
+            f"Columnas no encontradas: {', '.join(columnas_inexistentes)}"
+        )
+
     refrescar_cache_datos()
     return True
 
