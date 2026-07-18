@@ -33,6 +33,7 @@ from dashboard_trackless import mostrar_dashboard_trackless
 from registro_lucarbal import registro_lucarbal
 from historial_lucarbal import mostrar_historial_lucarbal
 from dashboard_lucarbal import mostrar_dashboard_lucarbal
+from editar_registros import editar_registros
 
 # ==========================================================
 # PLANTA MÓVIL - LIVERH
@@ -118,6 +119,7 @@ if ACCESO_TOTAL:
         "Registro Lucarbal",
         "Historial Lucarbal",
         "Dashboard Lucarbal",
+        "Editar Reportes",
 
         "Registro Mantto Planta Móvil",
         "Historial Mantto Planta Móvil",
@@ -136,7 +138,8 @@ elif empresa == "LUCARBAL":
 
         opciones_menu = [
             "Registro Lucarbal",
-            "Historial Lucarbal"
+            "Historial Lucarbal",
+            "Editar Reportes"
         ]
 
     elif rol in ["PLANNER", "ADMIN"]:
@@ -208,7 +211,8 @@ elif empresa == "VOLCAN":
 
         opciones_menu = [
             "Registro Evento",
-            "Historial Eventos"
+            "Historial Eventos",
+            "Editar Reportes"
         ]
 
     else:
@@ -315,6 +319,14 @@ elif menu == "Dashboard Lucarbal":
     else:
 
         st.error("No tienes permisos para ver Dashboard Lucarbal.")
+
+
+elif menu == "Editar Reportes":
+
+    if empresa in ["VOLCAN", "LUCARBAL"] or ACCESO_TOTAL:
+        editar_registros()
+    else:
+        st.error("No tienes permisos para editar reportes.")
 
 
 # ==========================================================
