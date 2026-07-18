@@ -26,6 +26,10 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.table import Table as ExcelTable, TableStyleInfo
+
 from database import (
     cargar_lucarbal_eventos,
     cargar_lucarbal_taller,
@@ -754,6 +758,346 @@ def generar_pdf(
 
 
 # ==========================================================
+# GENERAR EXCEL
+# ==========================================================
+
+def generar_excel(
+    df_eventos,
+    df_kpi,
+    df_flota,
+    df_taller,
+    fecha_ini,
+    fecha_fin,
+    turno,
+    familia,
+    incluir_taller=False
+):
+    """
+    Genera un archivo Excel con todos los eventos/paradas que cumplen
+    los filtros seleccionados en el dashboard.
+
+    Hojas incluidas:
+    - Eventos_Paradas: detalle completo de eventos de mina.
+    - KPI_Equipos: indicadores por equipo.
+    - Resumen_Flota: consolidado por familia.
+    - Taller: opcional, cuando el check de taller está activo.
+    """
+
+    buffer = BytesIO()
+
+    eventos_excel = df_eventos.copy()
+    kpi_excel = df_kpi.copy()
+    flota_excel = df_flota.copy()
+    taller_excel = df_taller.copy()
+
+    # ------------------------------------------------------
+    # Preparar eventos para Excel
+    # ------------------------------------------------------
+    columnas_eventos_excel = [
+        "id",
+        "fecha",
+        "turno",
+        "familia_equipo",
+        "codigo_lucarbal",
+        "codigo_cognos",
+        "marca",
+        "tipo_mantenimiento",
+        "hora_falla",
+        "hora_subsanada",
+        "tiempo_parada",
+        "descripcion",
+        "estado_operativo",
+        "tecnico",
+        "dni",
+        "requiere_repuesto",
+        "detalle_repuesto",
+        "apoyo_1",
+        "apoyo_2",
+        "fecha_registro",
+        "foto"
+    ]
+
+    for columna in columnas_eventos_excel:
+        if columna not in eventos_excel.columns:
+            eventos_excel[columna] = ""
+
+    eventos_excel = eventos_excel[columnas_eventos_excel].copy()
+
+    # No exportar el base64 porque vuelve muy pesado e ilegible el Excel.
+    # Se reemplaza por un indicador de evidencia.
+    eventos_excel["foto"] = eventos_excel["foto"].apply(
+        lambda valor: "SI" if str(valor).strip() not in ["", "SIN FOTO", "NAN", "NONE"] else "NO"
+    )
+
+    eventos_excel = eventos_excel.rename(columns={
+        "id": "ID evento",
+        "fecha": "Fecha",
+        "turno": "Turno",
+        "familia_equipo": "Familia",
+        "codigo_lucarbal": "Equipo Lucarbal",
+        "codigo_cognos": "Código Cognos",
+        "marca": "Marca",
+        "tipo_mantenimiento": "Tipo mantenimiento",
+        "hora_falla": "Hora inicio parada",
+        "hora_subsanada": "Hora subsanada",
+        "tiempo_parada": "Horas parada",
+        "descripcion": "Descripción / trabajo realizado",
+        "estado_operativo": "Estado operativo",
+        "tecnico": "Técnico",
+        "dni": "DNI",
+        "requiere_repuesto": "Requiere repuesto",
+        "detalle_repuesto": "Detalle repuesto",
+        "apoyo_1": "Apoyo 1",
+        "apoyo_2": "Apoyo 2",
+        "fecha_registro": "Fecha registro",
+        "foto": "Tiene evidencia"
+    })
+
+    if "Fecha" in eventos_excel.columns:
+        eventos_excel["Fecha"] = pd.to_datetime(
+            eventos_excel["Fecha"], errors="coerce"
+        ).dt.date
+
+    eventos_excel = eventos_excel.sort_values(
+        ["Fecha", "Equipo Lucarbal", "Hora inicio parada"],
+        ascending=[True, True, True]
+    )
+
+    # ------------------------------------------------------
+    # Preparar taller para Excel
+    # ------------------------------------------------------
+    columnas_taller_excel = [
+        "id_taller",
+        "fecha",
+        "turno",
+        "tecnico",
+        "apoyo_1",
+        "apoyo_2",
+        "hora_inicio",
+        "hora_fin",
+        "tiempo_trabajo_min",
+        "tipo_actividad",
+        "detalle",
+        "estado",
+        "evidencia",
+        "timestamp_registro"
+    ]
+
+    for columna in columnas_taller_excel:
+        if columna not in taller_excel.columns:
+            taller_excel[columna] = ""
+
+    taller_excel = taller_excel[columnas_taller_excel].copy()
+    taller_excel["evidencia"] = taller_excel["evidencia"].apply(
+        lambda valor: "SI" if str(valor).strip() not in ["", "SIN FOTO", "NAN", "NONE"] else "NO"
+    )
+
+    taller_excel = taller_excel.rename(columns={
+        "id_taller": "ID taller",
+        "fecha": "Fecha",
+        "turno": "Turno",
+        "tecnico": "Técnico",
+        "apoyo_1": "Apoyo 1",
+        "apoyo_2": "Apoyo 2",
+        "hora_inicio": "Hora inicio",
+        "hora_fin": "Hora fin",
+        "tiempo_trabajo_min": "Tiempo trabajo min",
+        "tipo_actividad": "Tipo actividad",
+        "detalle": "Detalle",
+        "estado": "Estado",
+        "evidencia": "Tiene evidencia",
+        "timestamp_registro": "Fecha registro"
+    })
+
+    if "Fecha" in taller_excel.columns:
+        taller_excel["Fecha"] = pd.to_datetime(
+            taller_excel["Fecha"], errors="coerce"
+        ).dt.date
+
+    # ------------------------------------------------------
+    # Crear libro
+    # ------------------------------------------------------
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        eventos_excel.to_excel(
+            writer,
+            sheet_name="Eventos_Paradas",
+            index=False,
+            startrow=4
+        )
+
+        kpi_excel.to_excel(
+            writer,
+            sheet_name="KPI_Equipos",
+            index=False,
+            startrow=4
+        )
+
+        flota_excel.to_excel(
+            writer,
+            sheet_name="Resumen_Flota",
+            index=False,
+            startrow=4
+        )
+
+        if incluir_taller:
+            taller_excel.to_excel(
+                writer,
+                sheet_name="Taller",
+                index=False,
+                startrow=4
+            )
+
+        workbook = writer.book
+
+        rojo = "C00000"
+        rojo_oscuro = "7F0000"
+        blanco = "FFFFFF"
+        gris_claro = "E7E6E6"
+        borde_fino = Side(style="thin", color="BFBFBF")
+
+        hojas = {
+            "Eventos_Paradas": eventos_excel,
+            "KPI_Equipos": kpi_excel,
+            "Resumen_Flota": flota_excel
+        }
+
+        if incluir_taller:
+            hojas["Taller"] = taller_excel
+
+        for nombre_hoja, dataframe in hojas.items():
+            ws = workbook[nombre_hoja]
+
+            ultima_columna = max(1, len(dataframe.columns))
+            ultima_fila = 5 + len(dataframe)
+
+            # Título
+            ws.merge_cells(
+                start_row=1,
+                start_column=1,
+                end_row=1,
+                end_column=ultima_columna
+            )
+            celda_titulo = ws.cell(row=1, column=1)
+            celda_titulo.value = f"LUCARBAL - {nombre_hoja.replace('_', ' ')}"
+            celda_titulo.font = Font(color=blanco, bold=True, size=15)
+            celda_titulo.fill = PatternFill("solid", fgColor=rojo_oscuro)
+            celda_titulo.alignment = Alignment(horizontal="center", vertical="center")
+            ws.row_dimensions[1].height = 26
+
+            # Información de filtros
+            ws.cell(row=2, column=1, value="Periodo")
+            ws.cell(row=2, column=2, value=f"{fecha_ini} al {fecha_fin}")
+            ws.cell(row=3, column=1, value="Turno")
+            ws.cell(row=3, column=2, value=turno)
+            ws.cell(row=3, column=3, value="Flota")
+            ws.cell(row=3, column=4, value=familia)
+
+            for fila in [2, 3]:
+                for columna in range(1, min(ultima_columna, 4) + 1):
+                    ws.cell(fila, columna).fill = PatternFill("solid", fgColor=gris_claro)
+                    ws.cell(fila, columna).font = Font(bold=columna in [1, 3])
+                    ws.cell(fila, columna).border = Border(
+                        left=borde_fino,
+                        right=borde_fino,
+                        top=borde_fino,
+                        bottom=borde_fino
+                    )
+
+            # Encabezados de tabla en fila 5
+            for celda in ws[5]:
+                if celda.column <= ultima_columna:
+                    celda.fill = PatternFill("solid", fgColor=rojo)
+                    celda.font = Font(color=blanco, bold=True)
+                    celda.alignment = Alignment(
+                        horizontal="center",
+                        vertical="center",
+                        wrap_text=True
+                    )
+                    celda.border = Border(
+                        left=borde_fino,
+                        right=borde_fino,
+                        top=borde_fino,
+                        bottom=borde_fino
+                    )
+
+            # Formato del cuerpo
+            for fila in ws.iter_rows(
+                min_row=6,
+                max_row=max(6, ultima_fila),
+                min_col=1,
+                max_col=ultima_columna
+            ):
+                for celda in fila:
+                    celda.alignment = Alignment(vertical="top", wrap_text=True)
+                    celda.border = Border(
+                        left=borde_fino,
+                        right=borde_fino,
+                        top=borde_fino,
+                        bottom=borde_fino
+                    )
+
+            # Tabla de Excel con filtros
+            if not dataframe.empty:
+                referencia = f"A5:{get_column_letter(ultima_columna)}{ultima_fila}"
+                nombre_tabla = "Tabla" + "".join(
+                    caracter for caracter in nombre_hoja if caracter.isalnum()
+                )
+                tabla = ExcelTable(displayName=nombre_tabla[:250], ref=referencia)
+                estilo = TableStyleInfo(
+                    name="TableStyleMedium2",
+                    showFirstColumn=False,
+                    showLastColumn=False,
+                    showRowStripes=True,
+                    showColumnStripes=False
+                )
+                tabla.tableStyleInfo = estilo
+                ws.add_table(tabla)
+
+            ws.freeze_panes = "A6"
+            ws.auto_filter.ref = f"A5:{get_column_letter(ultima_columna)}{max(5, ultima_fila)}"
+
+            # Anchos de columnas controlados
+            for indice, nombre_columna in enumerate(dataframe.columns, start=1):
+                serie = dataframe[nombre_columna].astype(str) if not dataframe.empty else pd.Series(dtype=str)
+                largo_maximo = max(
+                    len(str(nombre_columna)),
+                    int(serie.str.len().quantile(0.95)) if not serie.empty else 0
+                )
+
+                if any(palabra in str(nombre_columna).lower() for palabra in [
+                    "descripción", "detalle", "trabajo realizado"
+                ]):
+                    ancho = 45
+                elif "fecha" in str(nombre_columna).lower():
+                    ancho = 18
+                elif "hora" in str(nombre_columna).lower():
+                    ancho = 16
+                else:
+                    ancho = min(max(largo_maximo + 2, 11), 28)
+
+                ws.column_dimensions[get_column_letter(indice)].width = ancho
+
+            # Formatos numéricos específicos
+            for fila_excel in range(6, ultima_fila + 1):
+                for columna_excel, encabezado in enumerate(dataframe.columns, start=1):
+                    encabezado_txt = str(encabezado).lower()
+                    celda = ws.cell(row=fila_excel, column=columna_excel)
+
+                    if "disponibilidad" in encabezado_txt:
+                        celda.number_format = '0.00" %"'
+                    elif any(texto in encabezado_txt for texto in [
+                        "horas parada", "horas operativas", "mttr", "mtbf",
+                        "t. respuesta", "t. reparación"
+                    ]):
+                        celda.number_format = '0.00'
+                    elif encabezado_txt == "fecha":
+                        celda.number_format = "dd/mm/yyyy"
+
+    buffer.seek(0)
+    return buffer
+
+
+# ==========================================================
 # DASHBOARD PRINCIPAL
 # ==========================================================
 
@@ -761,7 +1105,7 @@ def mostrar_dashboard_lucarbal():
 
     st.title("🚛 Dashboard KPI Lucarbal")
     st.caption(
-        "Disponibilidad · MTTR · MTBF · Tiempos de atención · Taller · Informe PDF"
+        "Disponibilidad · MTTR · MTBF · Tiempos de atención · Taller · PDF · Excel"
     )
 
     if st.button("🔄 Actualizar datos", use_container_width=True):
@@ -1192,10 +1536,11 @@ def mostrar_dashboard_lucarbal():
             )
 
     # ======================================================
-    # EXPORTAR PDF
+    # EXPORTAR PDF Y EXCEL
     # ======================================================
 
     st.markdown("---")
+    st.subheader("📥 Exportar información")
 
     pdf = generar_pdf(
         df_kpi=df_kpi,
@@ -1210,10 +1555,34 @@ def mostrar_dashboard_lucarbal():
         incluir_anexo_fotografico=incluir_anexo_fotografico
     )
 
-    st.download_button(
-        label="📄 Exportar informe PDF",
-        data=pdf,
-        file_name=f"Informe_Lucarbal_{fecha_ini}_{fecha_fin}_{turno}.pdf",
-        mime="application/pdf",
-        use_container_width=True
+    excel = generar_excel(
+        df_eventos=df_filtrado,
+        df_kpi=df_kpi,
+        df_flota=df_flota,
+        df_taller=df_taller_filtrado,
+        fecha_ini=fecha_ini,
+        fecha_fin=fecha_fin,
+        turno=turno,
+        familia=familia,
+        incluir_taller=incluir_taller
     )
+
+    col_pdf, col_excel = st.columns(2)
+
+    with col_pdf:
+        st.download_button(
+            label="📄 Exportar informe PDF",
+            data=pdf,
+            file_name=f"Informe_Lucarbal_{fecha_ini}_{fecha_fin}_{turno}.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
+
+    with col_excel:
+        st.download_button(
+            label="📊 Exportar eventos y paradas a Excel",
+            data=excel,
+            file_name=f"Eventos_Paradas_Lucarbal_{fecha_ini}_{fecha_fin}_{turno}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True
+        )
