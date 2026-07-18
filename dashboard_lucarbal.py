@@ -286,6 +286,31 @@ def calcular_kpis(df, equipos, fecha_ini, fecha_fin, turno):
         mttr = horas_parada / eventos if eventos > 0 else 0
         mtbf = horas_operativas / eventos if eventos > 0 else 0
 
+        # Compatibilidad con registros históricos de tres tiempos.
+        # En los registros actuales estas columnas llegan vacías y fueron
+        # convertidas a 0, por lo que no afectan los KPI de dos horas.
+        tiempos_respuesta_validos = df_eq.loc[
+            df_eq["tiempo_respuesta"] > 0,
+            "tiempo_respuesta"
+        ]
+
+        tiempos_reparacion_validos = df_eq.loc[
+            df_eq["tiempo_reparacion"] > 0,
+            "tiempo_reparacion"
+        ]
+
+        tiempo_respuesta_prom = (
+            float(tiempos_respuesta_validos.mean())
+            if not tiempos_respuesta_validos.empty
+            else 0
+        )
+
+        tiempo_reparacion_prom = (
+            float(tiempos_reparacion_validos.mean())
+            if not tiempos_reparacion_validos.empty
+            else 0
+        )
+
         resumen.append({
             "Familia": familia,
             "Marca": marca,
@@ -297,7 +322,9 @@ def calcular_kpis(df, equipos, fecha_ini, fecha_fin, turno):
             "Eventos": eventos,
             "Disponibilidad %": round(disponibilidad, 2),
             "MTTR h": round(mttr, 2),
-            "MTBF h": round(mtbf, 2)
+            "MTBF h": round(mtbf, 2),
+            "T. respuesta prom h": round(tiempo_respuesta_prom, 2),
+            "T. reparación prom h": round(tiempo_reparacion_prom, 2)
         })
 
     return pd.DataFrame(resumen)
@@ -454,7 +481,9 @@ def generar_pdf(
         "H. parada",
         "Eventos",
         "MTTR",
-        "MTBF"
+        "MTBF",
+        "T. resp.",
+        "T. rep."
     ]]
 
     for _, r in df_kpi.iterrows():
@@ -467,7 +496,9 @@ def generar_pdf(
             f'{float(r["Horas parada"]):.2f}',
             str(int(r["Eventos"])),
             f'{float(r["MTTR h"]):.2f}',
-            f'{float(r["MTBF h"]):.2f}'
+            f'{float(r["MTBF h"]):.2f}',
+            f'{float(r.get("T. respuesta prom h", 0)):.2f}',
+            f'{float(r.get("T. reparación prom h", 0)):.2f}'
         ])
 
     tabla_kpi = Table(tabla_kpi_data, repeatRows=1)
@@ -1051,6 +1082,17 @@ def mostrar_dashboard_lucarbal():
         "T. respuesta prom h",
         "T. reparación prom h"
     ]
+
+    # Evita que el dashboard se detenga si una columna opcional no existe
+    # en una versión antigua o futura de la hoja de cálculo.
+    for col in columnas_kpi:
+        if col not in df_kpi.columns:
+            df_kpi[col] = 0 if col not in [
+                "Familia",
+                "Marca",
+                "Equipo",
+                "Cognos"
+            ] else ""
 
     st.dataframe(
         df_kpi[columnas_kpi],
