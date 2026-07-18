@@ -179,22 +179,39 @@ def _mapa_encabezados(ws) -> Dict[str, int]:
 
 
 def _asegurar_columnas(ws, columnas: Iterable[str]) -> Dict[str, int]:
+    """
+    Garantiza que las columnas solicitadas existan en la fila 1.
+
+    Se utiliza update_cell() en lugar de Worksheet.update() para evitar
+    incompatibilidades entre versiones de gspread en Streamlit Cloud.
+    También amplía la cantidad de columnas físicas de la hoja cuando sea
+    necesario.
+    """
     encabezados = ws.row_values(1)
     mapa = _mapa_encabezados(ws)
-    nuevas = []
 
-    for columna in columnas:
-        if _normalizar_encabezado(columna) not in mapa:
-            nuevas.append(columna)
+    nuevas = [
+        str(columna).strip()
+        for columna in columnas
+        if str(columna).strip()
+        and _normalizar_encabezado(columna) not in mapa
+    ]
 
-    if nuevas:
-        inicio = len(encabezados) + 1
-        fin = inicio + len(nuevas) - 1
-        rango = f"{rowcol_to_a1(1, inicio)}:{rowcol_to_a1(1, fin)}"
-        ws.update(values=[nuevas], range_name=rango, value_input_option="RAW")
-        mapa = _mapa_encabezados(ws)
+    if not nuevas:
+        return mapa
 
-    return mapa
+    inicio = len(encabezados) + 1
+    total_requerido = len(encabezados) + len(nuevas)
+
+    # Google Sheets puede tener menos columnas físicas que las requeridas.
+    if ws.col_count < total_requerido:
+        ws.add_cols(total_requerido - ws.col_count)
+
+    # Escritura individual, compatible con gspread 5.x y 6.x.
+    for desplazamiento, nombre_columna in enumerate(nuevas):
+        ws.update_cell(1, inicio + desplazamiento, nombre_columna)
+
+    return _mapa_encabezados(ws)
 
 
 def _buscar_fila_por_id(ws, columna_id: str, registro_id: str) -> Optional[int]:
