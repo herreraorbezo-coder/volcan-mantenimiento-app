@@ -46,6 +46,7 @@ AREAS_PLANTA_MOVIL = {
         "Motor de compresor",
         "Filtro Regulador",
         "Lubricador de Aire",
+        "Compuerta de Descarga de Mezclador de Cilindros Neumáticos",
         "Mariposas de descarga - balanza de cemento"
     ],
     "Área 3 - Faja Transportadora": [
