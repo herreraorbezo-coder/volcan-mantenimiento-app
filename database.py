@@ -191,7 +191,7 @@ def _asegurar_columnas(ws, columnas: Iterable[str]) -> Dict[str, int]:
         inicio = len(encabezados) + 1
         fin = inicio + len(nuevas) - 1
         rango = f"{rowcol_to_a1(1, inicio)}:{rowcol_to_a1(1, fin)}"
-        ws.update(rango_name=rango, values=[nuevas], value_input_option="RAW")
+        ws.update(values=[nuevas], range_name=rango, value_input_option="RAW")
         mapa = _mapa_encabezados(ws)
 
     return mapa
