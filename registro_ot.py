@@ -35,6 +35,45 @@ def ahora_peru():
     return datetime.now(ZoneInfo("America/Lima"))
 
 
+def validar_archivo_imagen(archivo, limite_mb=8):
+    """Valida tamaño y tipo antes de procesar la evidencia."""
+    if archivo is None:
+        return True, ""
+
+    nombre = str(getattr(archivo, "name", "")).lower()
+    if not nombre.endswith((".jpg", ".jpeg", ".png")):
+        return False, "Formato no permitido. Use JPG, JPEG o PNG."
+
+    tamanio = int(getattr(archivo, "size", 0) or 0)
+    if tamanio > limite_mb * 1024 * 1024:
+        return False, (
+            f"La imagen pesa más de {limite_mb} MB. "
+            "Redúzcala o tome una foto con menor resolución."
+        )
+
+    return True, ""
+
+
+def guardar_seguro(funcion_guardado, datos, bandera):
+    """Evita doble envío y conserva el formulario cuando Google Sheets falla."""
+    if st.session_state.get(bandera, False):
+        st.warning("El registro ya se está procesando. Espere unos segundos.")
+        return False
+
+    st.session_state[bandera] = True
+    try:
+        funcion_guardado(datos)
+        return True
+    except Exception as error:
+        st.error(
+            "No se pudo guardar el registro. Los datos del formulario se mantienen "
+            "para que pueda intentarlo nuevamente. Detalle: " + str(error)
+        )
+        return False
+    finally:
+        st.session_state[bandera] = False
+
+
 # ==========================================================
 # TÉCNICOS MANTENIMIENTO MECÁNICO
 # ==========================================================
@@ -567,7 +606,12 @@ def mostrar_registro_bombeo(reset_id):
             foto_guardada
         ]
 
-        guardar_bitacora(datos)
+        if not guardar_seguro(
+            guardar_bitacora,
+            datos,
+            "guardando_evento_bombeo"
+        ):
+            st.stop()
 
         st.success(
             "✅ Evento registrado correctamente. "
@@ -839,7 +883,12 @@ def mostrar_registro_taller_volcan(reset_id):
             str(ahora_peru())
         ]
 
-        guardar_volcan_taller(datos)
+        if not guardar_seguro(
+            guardar_volcan_taller,
+            datos,
+            "guardando_taller_volcan"
+        ):
+            st.stop()
 
         st.success(
             "✅ Actividad de taller / apoyo registrada correctamente."
